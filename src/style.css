@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+:root {
+  --color-urban-blue: #003399;
+  --color-urban-dark: #20335f;
+}
+
+body {
+  background-color: #f8fafc; /* Color de fondo base de Tailwind */
+}
