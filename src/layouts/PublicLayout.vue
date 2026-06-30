@@ -1,22 +1,32 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { onMounted, ref, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import imagotipoUrl from '../assets/UrbanSphere-Imagotipo.png'
 import { useSesion } from '../composables/useSesion'
 
 const router = useRouter()
-const { autenticado, nombre, rolNombre, accesoAdmin, cargarSesion, cerrarSesion } = useSesion()
+const route = useRoute()
+const { autenticado, nombre, accesoAdmin, cargarSesion, cerrarSesion } = useSesion()
 const cerrando = ref(false)
 
 onMounted(() => {
   cargarSesion()
 })
 
+watch(
+  () => route.path,
+  () => {
+    cargarSesion()
+  },
+)
+
 const manejarCerrarSesion = async () => {
   cerrando.value = true
   try {
     await cerrarSesion()
-    router.push('/')
+    if (router.currentRoute.value.path !== '/') {
+      await router.push('/')
+    }
   } finally {
     cerrando.value = false
   }
@@ -41,7 +51,6 @@ const manejarCerrarSesion = async () => {
             <span>
               Sesión activa:
               <strong class="text-slate-800">{{ nombre ?? 'Usuario' }}</strong>
-              <span v-if="rolNombre" class="capitalize">({{ rolNombre }})</span>
             </span>
           </div>
 

@@ -22,10 +22,51 @@ import type {
   PerfilUsuario,
   RefrescarTokenDto,
   RefrescarTokenRespuesta,
+  Rol,
 } from '../../types/usuarios'
-import { esUsuarioEstandar, puedeAccederPanelAdmin } from '../../constants/roles'
+import { esUsuarioEstandar, puedeAccederPanelAdmin, ROLES } from '../../constants/roles'
 
 type UsuarioSesion = IniciarSesionRespuesta['usuario'] | PerfilUsuario
+
+/** La API puede devolver rolId, rol_id o solo rol { id, nombre } */
+function extraerRolId(usuario: Record<string, unknown>): number | null {
+  const rol = usuario.rol as { id?: number | string; nombre?: string } | undefined
+  const raw = usuario.rolId ?? usuario.rol_id ?? rol?.id
+
+  if (typeof raw === 'number' && !Number.isNaN(raw)) return raw
+  if (typeof raw === 'string') {
+    const parsed = Number(raw)
+    if (!Number.isNaN(parsed)) return parsed
+  }
+
+  const nombreRol = rol?.nombre?.toLowerCase()
+  if (nombreRol === 'admin') return ROLES.ADMIN
+  if (nombreRol === 'user') return ROLES.USER
+  if (nombreRol === 'agent') return ROLES.AGENT
+
+  return null
+}
+
+function construirRol(rolId: number, rolRaw?: { id?: number; nombre?: string; descripcion?: string }): Rol {
+  if (rolRaw?.id && rolRaw.nombre) {
+    return { id: rolRaw.id, nombre: rolRaw.nombre, descripcion: rolRaw.descripcion }
+  }
+  const nombre = rolId === ROLES.ADMIN ? 'admin' : rolId === ROLES.AGENT ? 'agent' : 'user'
+  return { id: rolId, nombre }
+}
+
+function normalizarUsuario(raw: unknown): UsuarioSesion | null {
+  if (!raw || typeof raw !== 'object') return null
+  const data = raw as Record<string, unknown>
+  const rolId = extraerRolId(data)
+  const rolRaw = data.rol as { id?: number; nombre?: string; descripcion?: string } | undefined
+
+  return {
+    ...(data as UsuarioSesion),
+    rolId: rolId ?? undefined,
+    rol: rolId ? construirRol(rolId, rolRaw) : undefined,
+  }
+}
 
 function guardarSesion(
   data: IniciarSesionRespuesta | RefrescarTokenRespuesta,
@@ -34,7 +75,10 @@ function guardarSesion(
   localStorage.setItem(STORAGE_KEYS.tokenAcceso, data.tokenAcceso)
   localStorage.setItem(STORAGE_KEYS.tokenRefresco, data.tokenRefresco)
   if (usuario) {
-    localStorage.setItem(STORAGE_KEYS.usuario, JSON.stringify(usuario))
+    const normalizado = normalizarUsuario(usuario)
+    if (normalizado) {
+      localStorage.setItem(STORAGE_KEYS.usuario, JSON.stringify(normalizado))
+    }
   }
 }
 
@@ -91,8 +135,9 @@ export const authService = {
    */
   async obtenerPerfil(): Promise<PerfilUsuario> {
     const { data } = await api.get<PerfilUsuario>('/autenticacion/perfil')
-    localStorage.setItem(STORAGE_KEYS.usuario, JSON.stringify(data))
-    return data
+    const normalizado = normalizarUsuario(data) ?? data
+    localStorage.setItem(STORAGE_KEYS.usuario, JSON.stringify(normalizado))
+    return normalizado as PerfilUsuario
   },
 
   /** Usuario cacheado en localStorage (tras login o perfil) */
@@ -100,7 +145,7 @@ export const authService = {
     const raw = localStorage.getItem(STORAGE_KEYS.usuario)
     if (!raw) return null
     try {
-      return JSON.parse(raw) as UsuarioSesion
+      return normalizarUsuario(JSON.parse(raw))
     } catch {
       return null
     }
@@ -109,7 +154,7 @@ export const authService = {
   obtenerRolIdLocal(): number | null {
     const usuario = this.obtenerUsuarioLocal()
     if (!usuario) return null
-    return usuario.rolId ?? usuario.rol?.id ?? null
+    return extraerRolId(usuario as unknown as Record<string, unknown>)
   },
 
   obtenerRolNombreLocal(): string | null {

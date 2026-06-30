@@ -2,9 +2,10 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import imagotipoUrl from '../assets/UrbanSphere-Imagotipo.png'
-import { authService } from '../services/usuarios'
+import { useSesion } from '../composables/useSesion'
 
 const router = useRouter()
+const { nombre, rolNombre, cargarSesion, cerrarSesion } = useSesion()
 
 const nombreUsuario = ref('Administrador')
 const rolUsuario = ref('Admin')
@@ -17,29 +18,18 @@ const iniciales = computed(() => {
 })
 
 onMounted(async () => {
-  const local = authService.obtenerUsuarioLocal()
-  if (local) {
-    nombreUsuario.value = local.nombre
-  }
-
-  if (authService.estaAutenticado()) {
-    try {
-      const perfil = await authService.obtenerPerfil()
-      nombreUsuario.value = perfil.nombre
-      rolUsuario.value = perfil.rol?.nombre ?? 'Usuario'
-    } catch {
-      // Si falla el perfil, se mantiene la info del login
-    }
-  }
+  await cargarSesion()
+  if (nombre.value) nombreUsuario.value = nombre.value
+  if (rolNombre.value) rolUsuario.value = rolNombre.value
 })
 
 const manejarCerrarSesion = async () => {
   cerrando.value = true
   try {
-    await authService.cerrarSesion()
+    await cerrarSesion()
+    await router.push('/')
   } finally {
     cerrando.value = false
-    router.push('/')
   }
 }
 </script>
