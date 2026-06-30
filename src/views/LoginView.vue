@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-vue-next';
 import { authService } from '../services/authService';
 import isotipoUrl from '../assets/UrbanSphere-Isotipo.png';
 
@@ -9,6 +10,7 @@ const router = useRouter();
 // Variables reactivas para capturar lo que el usuario escribe
 const correo = ref('');
 const contrasena = ref('');
+const mostrarContrasena = ref(false);
 const cargando = ref(false);
 const errorMsg = ref('');
 
@@ -17,24 +19,39 @@ const manejarLogin = async () => {
   errorMsg.value = '';
   
   try {
-    // 1. LLAMADA REAL A AXIOS (Conectada a la arquitectura de Ignacio)
+    // 1. LLAMADA REAL A AXIOS (Conectada al MS de Usuarios)
     await authService.login({
       correo_electronico: correo.value,
       contrasena: contrasena.value
     });
     
-    // Si la API responde con éxito, guardará el token y nos mandará al Admin
-    router.push('/admin/nuevo-proyecto');
-    
-  } catch (error: any) {
-    console.warn("[Auth] El backend no respondió o las credenciales fallaron. Activando modo de pruebas local.");
-    
-    // Sincronizado con el registro ID 1 de tu Navicat
-    if (correo.value === 'juan@example.com') {
-      localStorage.setItem('urbansphere_token', 'mock-jwt-token-valido-para-pruebas');
-      router.push('/admin/nuevo-proyecto');
+    // Leemos el usuario para redirigirlo según su rol
+    const userStr = localStorage.getItem('urbansphere_user');
+    if (userStr) {
+      const u = JSON.parse(userStr);
+      const rolId = u.rolId ? Number(u.rolId) : (u.rol === 'admin' ? 1 : (u.rol === 'agent' ? 3 : 2));
+      if (rolId === 2) {
+        router.push('/catalogo');
+      } else {
+        router.push('/admin/nuevo-proyecto');
+      }
     } else {
-      errorMsg.value = 'Credenciales incorrectas o servidor fuera de línea. Usa juan@example.com (con cualquier clave) para pruebas.';
+      router.push('/');
+    }
+  } catch (error: any) {
+    if (error.response) {
+      // El backend respondió con un error (ej. 401 o 404)
+      errorMsg.value = error.response.data?.message || 'Credenciales incorrectas.';
+    } else {
+      console.warn("[Auth] El backend no respondió. Activando modo de pruebas local.");
+      
+      // Sincronizado con el registro de ejemplo
+      if (correo.value === 'juan@example.com') {
+        localStorage.setItem('urbansphere_token', 'mock-jwt-token-valido-para-pruebas');
+        router.push('/admin/nuevo-proyecto');
+      } else {
+        errorMsg.value = 'Servidor fuera de línea. Usa juan@example.com para pruebas locales.';
+      }
     }
   } finally {
     cargando.value = false;
@@ -76,7 +93,9 @@ const manejarLogin = async () => {
           <div>
             <label class="block text-sm font-bold text-slate-900 mb-2">Correo electrónico</label>
             <div class="relative">
-              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">✉️</span>
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                <Mail class="w-5 h-5" />
+              </span>
               <input v-model="correo" type="email" placeholder="ejemplo@correo.com" class="w-full border border-slate-300 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#003399] transition-colors" required />
             </div>
           </div>
@@ -84,8 +103,14 @@ const manejarLogin = async () => {
           <div>
             <label class="block text-sm font-bold text-slate-900 mb-2">Contraseña</label>
             <div class="relative">
-              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">🔒</span>
-              <input v-model="contrasena" type="password" placeholder="Ingresa tu contraseña" class="w-full border border-slate-300 rounded-xl pl-10 pr-10 py-3 text-sm focus:outline-none focus:border-[#003399] transition-colors" required />
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                <Lock class="w-5 h-5" />
+              </span>
+              <input v-model="contrasena" :type="mostrarContrasena ? 'text' : 'password'" placeholder="Ingresa tu contraseña" class="w-full border border-slate-300 rounded-xl pl-10 pr-10 py-3 text-sm focus:outline-none focus:border-[#003399] transition-colors" required />
+              <button type="button" @click="mostrarContrasena = !mostrarContrasena" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none cursor-pointer">
+                <EyeOff v-if="mostrarContrasena" class="w-5 h-5" />
+                <Eye v-else class="w-5 h-5" />
+              </button>
             </div>
           </div>
 
@@ -102,9 +127,12 @@ const manejarLogin = async () => {
           </button>
         </form>
 
-        <div class="text-center">
-          <router-link to="/" class="text-sm font-bold text-slate-500 hover:text-[#003399] transition-colors flex items-center justify-center gap-1">
-            ← Volver al Catálogo Público
+        <div class="text-center flex flex-col gap-3">
+          <router-link to="/registro" class="text-sm font-bold text-slate-600 hover:text-[#003399] transition-colors">
+            ¿No tienes cuenta? Regístrate aquí
+          </router-link>
+          <router-link to="/" class="text-sm font-bold text-slate-400 hover:text-[#003399] transition-colors flex items-center justify-center gap-1">
+            <ArrowLeft class="w-4 h-4" /> Volver al Catálogo Público
           </router-link>
         </div>
 

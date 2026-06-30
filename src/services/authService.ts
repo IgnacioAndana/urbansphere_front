@@ -1,44 +1,101 @@
 import api from './api';
 
-// Interfaces tipadas basadas en el esquema de la BD y Postman de Ignacio
 export interface LoginCredentials {
-  correo_electronico: string; // Mapeado exacto a la BD
+  correo_electronico: string;
   contrasena: string;
 }
 
 export interface AuthResponse {
-  token: string;
+  tokenAcceso: string;
+  tokenRefresco: string;
+  expiraEn: string;
   usuario: {
     id: number;
     nombre: string;
-    correo_electronico: string;
-    rol: string;
+    email: string;
+    creadoEn: string;
   };
+}
+
+export interface RegisterData {
+  nombre: string;
+  email: string;
+  contrasena: string;
+  rolId?: number;
 }
 
 export const authService = {
   /**
-   * Envía las credenciales al backend para obtener el token JWT
+   * Envía las credenciales al backend para obtener los tokens JWT
    */
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    // Apunta al endpoint real del microservicio mapeado en Postman
     const response = await api.post<AuthResponse>('/autenticacion/iniciar-sesion', {
-      correo: credentials.correo_electronico,
+      email: credentials.correo_electronico,
       contrasena: credentials.contrasena
     });
     
-    // Si la respuesta trae un token, lo almacenamos de forma persistente
-    if (response.data && response.data.token) {
-      localStorage.setItem('urbansphere_token', response.data.token);
+    if (response.data && response.data.tokenAcceso) {
+      localStorage.setItem('urbansphere_token', response.data.tokenAcceso);
+      localStorage.setItem('urbansphere_refresh_token', response.data.tokenRefresco);
+      localStorage.setItem('urbansphere_user', JSON.stringify(response.data.usuario));
     }
     
     return response.data;
   },
 
   /**
-   * Elimina las credenciales del almacenamiento local
+   * Registra un nuevo usuario
    */
-  logout(): void {
+  async register(data: RegisterData): Promise<any> {
+    const response = await api.post('/usuarios', data);
+    return response.data;
+  },
+
+  /**
+   * Obtiene el perfil del usuario autenticado
+   */
+  async getProfile(): Promise<any> {
+    const response = await api.get('/autenticacion/perfil');
+    return response.data;
+  },
+
+  /**
+   * Obtiene la lista de usuarios (Requiere token)
+   */
+  async getUsers(): Promise<any[]> {
+    const response = await api.get('/usuarios');
+    return response.data;
+  },
+
+  /**
+   * Actualiza un usuario (Requiere token)
+   */
+  async updateUser(id: number, data: Partial<RegisterData>): Promise<any> {
+    const response = await api.patch(`/usuarios/${id}`, data);
+    return response.data;
+  },
+
+  /**
+   * Elimina un usuario por ID (Requiere token)
+   */
+  async deleteUser(id: number): Promise<void> {
+    await api.delete(`/usuarios/${id}`);
+  },
+
+  /**
+   * Elimina las credenciales del almacenamiento local (y podría notificar al backend)
+   */
+  async logout(): Promise<void> {
+    const refreshToken = localStorage.getItem('urbansphere_refresh_token');
+    if (refreshToken) {
+      try {
+        await api.post('/autenticacion/cerrar-sesion', { tokenRefresco: refreshToken });
+      } catch (e) {
+        console.warn('Error al cerrar sesión en el backend', e);
+      }
+    }
     localStorage.removeItem('urbansphere_token');
+    localStorage.removeItem('urbansphere_refresh_token');
+    localStorage.removeItem('urbansphere_user');
   }
 };

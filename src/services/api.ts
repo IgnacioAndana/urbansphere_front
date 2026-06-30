@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Instancia global de Axios apuntando al API Gateway o al entorno Docker local
 const api = axios.create({
-  baseURL: 'http://localhost:3001/api', // Ajustable según los puertos del Docker Compose de Ignacio
+  baseURL: 'http://13.222.88.101:3000/api', // Ajustable según los puertos del Docker Compose de Ignacio
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -29,10 +29,16 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response) {
-      // Caso 401: Token inválido o expirado -> Limpiar sesión y mandar al login
+      // Caso 401: Token inválido o expirado
       if (error.response.status === 401) {
         localStorage.removeItem('urbansphere_token');
-        window.location.href = '/login';
+        localStorage.removeItem('urbansphere_refresh_token');
+        localStorage.removeItem('urbansphere_user');
+        
+        // No redirigir si el error provino del intento de login en sí
+        if (error.config && !error.config.url.includes('/autenticacion/iniciar-sesion')) {
+          window.location.href = '/login';
+        }
       }
       console.error(`[API Error ${error.response.status}]:`, error.response.data);
     } else {
