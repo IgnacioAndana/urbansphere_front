@@ -1,45 +1,39 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { authService } from '../services/authService';
-import isotipoUrl from '../assets/UrbanSphere-Isotipo.png';
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { authService } from '../services/usuarios'
+import { obtenerMensajeErrorLogin } from '../utils/apiError'
+import { redirigirTrasLogin, rutaSiYaAutenticado } from '../utils/authRedirect'
+import isotipoUrl from '../assets/UrbanSphere-Isotipo.png'
 
-const router = useRouter();
+const router = useRouter()
 
-// Variables reactivas para capturar lo que el usuario escribe
-const correo = ref('');
-const contrasena = ref('');
-const cargando = ref(false);
-const errorMsg = ref('');
+const email = ref('')
+const contrasena = ref('')
+const cargando = ref(false)
+const errorMsg = ref('')
+
+onMounted(() => {
+  const destino = rutaSiYaAutenticado()
+  if (destino) router.replace(destino)
+})
 
 const manejarLogin = async () => {
-  cargando.value = true;
-  errorMsg.value = '';
-  
+  cargando.value = true
+  errorMsg.value = ''
+
   try {
-    // 1. LLAMADA REAL A AXIOS (Conectada a la arquitectura de Ignacio)
-    await authService.login({
-      correo_electronico: correo.value,
-      contrasena: contrasena.value
-    });
-    
-    // Si la API responde con éxito, guardará el token y nos mandará al Admin
-    router.push('/admin/nuevo-proyecto');
-    
-  } catch (error: any) {
-    console.warn("[Auth] El backend no respondió o las credenciales fallaron. Activando modo de pruebas local.");
-    
-    // Sincronizado con el registro ID 1 de tu Navicat
-    if (correo.value === 'juan@example.com') {
-      localStorage.setItem('urbansphere_token', 'mock-jwt-token-valido-para-pruebas');
-      router.push('/admin/nuevo-proyecto');
-    } else {
-      errorMsg.value = 'Credenciales incorrectas o servidor fuera de línea. Usa juan@example.com (con cualquier clave) para pruebas.';
-    }
+    await authService.iniciarSesion({
+      email: email.value,
+      contrasena: contrasena.value,
+    })
+    await redirigirTrasLogin(router)
+  } catch (error) {
+    errorMsg.value = obtenerMensajeErrorLogin(error)
   } finally {
-    cargando.value = false;
+    cargando.value = false
   }
-};
+}
 </script>
 
 <template>
@@ -68,8 +62,12 @@ const manejarLogin = async () => {
         </div>
 
         <!-- Alerta de Error Dinámica -->
-        <div v-if="errorMsg" class="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl text-xs font-semibold">
-          ⚠️ {{ errorMsg }}
+        <div
+          v-if="errorMsg"
+          role="alert"
+          class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-sm font-medium"
+        >
+          {{ errorMsg }}
         </div>
 
         <form @submit.prevent="manejarLogin" class="flex flex-col gap-5">
@@ -77,7 +75,7 @@ const manejarLogin = async () => {
             <label class="block text-sm font-bold text-slate-900 mb-2">Correo electrónico</label>
             <div class="relative">
               <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">✉️</span>
-              <input v-model="correo" type="email" placeholder="ejemplo@correo.com" class="w-full border border-slate-300 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#003399] transition-colors" required />
+              <input v-model="email" type="email" placeholder="juan@example.com" class="w-full border border-slate-300 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#003399] transition-colors" required />
             </div>
           </div>
           

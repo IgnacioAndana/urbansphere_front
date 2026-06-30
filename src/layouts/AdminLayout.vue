@@ -1,5 +1,47 @@
 <script setup lang="ts">
-import imagotipoUrl from '../assets/UrbanSphere-Imagotipo.png';
+import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import imagotipoUrl from '../assets/UrbanSphere-Imagotipo.png'
+import { authService } from '../services/usuarios'
+
+const router = useRouter()
+
+const nombreUsuario = ref('Administrador')
+const rolUsuario = ref('Admin')
+const cerrando = ref(false)
+
+const iniciales = computed(() => {
+  const partes = nombreUsuario.value.trim().split(/\s+/)
+  if (partes.length >= 2) return (partes[0][0] + partes[1][0]).toUpperCase()
+  return nombreUsuario.value.slice(0, 2).toUpperCase()
+})
+
+onMounted(async () => {
+  const local = authService.obtenerUsuarioLocal()
+  if (local) {
+    nombreUsuario.value = local.nombre
+  }
+
+  if (authService.estaAutenticado()) {
+    try {
+      const perfil = await authService.obtenerPerfil()
+      nombreUsuario.value = perfil.nombre
+      rolUsuario.value = perfil.rol?.nombre ?? 'Usuario'
+    } catch {
+      // Si falla el perfil, se mantiene la info del login
+    }
+  }
+})
+
+const manejarCerrarSesion = async () => {
+  cerrando.value = true
+  try {
+    await authService.cerrarSesion()
+  } finally {
+    cerrando.value = false
+    router.push('/')
+  }
+}
 </script>
 
 <template>
@@ -15,15 +57,23 @@ import imagotipoUrl from '../assets/UrbanSphere-Imagotipo.png';
         <router-link to="/admin/nuevo-proyecto" class="flex items-center gap-3 px-3 py-3 bg-[#003399] text-white rounded-lg font-bold text-sm">
           <span>📝</span> Proyectos
         </router-link>
+        <router-link to="/" class="flex items-center gap-3 px-3 py-3 hover:bg-slate-800 rounded-lg font-medium text-sm transition-colors">
+          <span>🏠</span> Volver al catálogo
+        </router-link>
         <a href="#" class="flex items-center gap-3 px-3 py-3 hover:bg-slate-800 rounded-lg font-medium text-sm transition-colors">
           <span>👥</span> Usuarios
         </a>
       </nav>
       
       <div class="p-4 border-t border-slate-800">
-        <router-link to="/" class="flex items-center gap-3 px-3 py-2 hover:bg-slate-800 rounded-lg font-medium text-sm text-red-400">
-          <span>🚪</span> Cerrar Sesión
-        </router-link>
+        <button
+          type="button"
+          :disabled="cerrando"
+          class="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-800 rounded-lg font-medium text-sm text-red-400 disabled:opacity-50"
+          @click="manejarCerrarSesion"
+        >
+          <span>🚪</span> {{ cerrando ? 'Cerrando...' : 'Cerrar Sesión' }}
+        </button>
       </div>
     </aside>
 
@@ -31,10 +81,10 @@ import imagotipoUrl from '../assets/UrbanSphere-Imagotipo.png';
       <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-6 shrink-0">
         <div class="text-sm text-slate-500 font-medium">Proyectos > <span class="text-[#003399] font-bold">Nuevo Proyecto</span></div>
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 bg-blue-100 text-[#003399] rounded-full flex items-center justify-center font-bold text-xs">AM</div>
+          <div class="w-8 h-8 bg-blue-100 text-[#003399] rounded-full flex items-center justify-center font-bold text-xs">{{ iniciales }}</div>
           <div class="text-xs">
-            <p class="font-bold text-slate-800">Admin Manager</p>
-            <p class="text-slate-500">Administrador</p>
+            <p class="font-bold text-slate-800">{{ nombreUsuario }}</p>
+            <p class="text-slate-500 capitalize">{{ rolUsuario }}</p>
           </div>
         </div>
       </header>

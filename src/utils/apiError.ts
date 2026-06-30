@@ -1,0 +1,106 @@
+import axios from 'axios'
+import type { ApiErrorBody } from '../types/usuarios'
+
+const MENSAJES_POR_STATUS: Record<number, string> = {
+  400: 'Los datos enviados no son válidos.',
+  401: 'Email o contraseña incorrectos. Verifica tus datos e intenta nuevamente.',
+  403: 'No tienes permiso para realizar esta acción.',
+  404: 'El recurso solicitado no existe.',
+  500: 'Error interno del servidor. Intenta más tarde.',
+  503: 'El servicio no está disponible. Intenta más tarde.',
+}
+
+function normalizarData(data: unknown): unknown {
+  if (typeof data === 'string') {
+    try {
+      return JSON.parse(data)
+    } catch {
+      return data
+    }
+  }
+  return data
+}
+
+/** Recorre la respuesta anidada del BFF (mensaje → mensaje → message) */
+function buscarMensajeTexto(valor: unknown, profundidad = 0): string | undefined {
+  if (profundidad > 8) return undefined
+
+  if (typeof valor === 'string') {
+    const texto = valor.trim()
+    return texto.length > 0 ? texto : undefined
+  }
+
+  if (!valor || typeof valor !== 'object') return undefined
+
+  const body = valor as ApiErrorBody
+  const claves: (keyof ApiErrorBody)[] = ['message', 'mensaje', 'error']
+
+  for (const clave of claves) {
+    const contenido = body[clave]
+    if (typeof contenido === 'string') {
+      const texto = contenido.trim()
+      if (texto && clave !== 'error') return texto
+      if (texto && clave === 'error' && !body.message && !body.mensaje) return texto
+    }
+    if (typeof contenido === 'object' && contenido !== null) {
+      const anidado = buscarMensajeTexto(contenido, profundidad + 1)
+      if (anidado) return anidado
+    }
+  }
+
+  return undefined
+}
+
+function esErrorDeCredenciales(mensaje: string): boolean {
+  const lower = mensaje.toLowerCase()
+  return (
+    lower.includes('credencial') ||
+    lower.includes('unauthorized') ||
+    lower.includes('no autorizado')
+  )
+}
+
+/** Obtiene un mensaje legible desde la respuesta de error del BFF/NestJS */
+export function obtenerMensajeError(error: unknown, fallback = 'Ocurrió un error inesperado'): string {
+  if (axios.isAxiosError(error)) {
+    if (!error.response) {
+      return 'No se pudo conectar con el servidor. Verifica tu conexión e inténtalo de nuevo.'
+    }
+
+    const status = error.response.status
+    const data = normalizarData(error.response.data)
+    const extraido = buscarMensajeTexto(data)
+
+    if (extraido && esErrorDeCredenciales(extraido)) {
+      return MENSAJES_POR_STATUS[401]
+    }
+
+    if (extraido) return extraido
+
+    if (status in MENSAJES_POR_STATUS) return MENSAJES_POR_STATUS[status]
+  }
+
+  if (error instanceof Error && error.message.trim()) return error.message
+  return fallback
+}
+
+/** Mensajes pensados para el formulario de login (LoginView.vue) */
+export function obtenerMensajeErrorLogin(error: unknown): string {
+  if (axios.isAxiosError(error)) {
+    const status = error.response?.status
+
+    if (!error.response) {
+      return 'No se pudo conectar con el servidor. Verifica tu conexión e inténtalo de nuevo.'
+    }
+
+    if (status === 401) {
+      return MENSAJES_POR_STATUS[401]
+    }
+
+    if (status && status >= 500) {
+      return MENSAJES_POR_STATUS[503]
+    }
+  }
+
+  return obtenerMensajeError(error, 'No se pudo iniciar sesión. Intenta nuevamente.')
+}
