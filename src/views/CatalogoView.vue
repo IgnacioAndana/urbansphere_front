@@ -104,7 +104,7 @@ watch(vistaMobile, async (vista) => {
         class="md:col-span-5 lg:col-span-4 border-r border-slate-200 overflow-y-auto bg-white flex flex-col min-h-0"
         :class="vistaMobile === 'mapa' ? 'hidden md:flex' : 'flex'"
       >
-        <div class="p-4 sm:p-6 border-b border-slate-100 flex flex-col gap-3 sm:gap-4 sticky top-0 bg-white z-10">
+        <div class="p-4 sm:p-6 border-b border-slate-100 flex flex-col gap-3 sm:gap-4 shrink-0 bg-white">
           <div class="relative">
             <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">📍</span>
             <input
