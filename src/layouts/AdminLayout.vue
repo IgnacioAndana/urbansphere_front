@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import imagotipoUrl from '../assets/UrbanSphere-Imagotipo.png'
+import isotipoUrl from '../assets/UrbanSphere-Isotipo.png'
 import MiPerfilModal from '../components/MiPerfilModal.vue'
 import { useSesion } from '../composables/useSesion'
 import { nombreRolPorId } from '../constants/roles'
@@ -67,8 +67,18 @@ const manejarCerrarSesion = async () => {
   <div class="flex h-screen bg-slate-100 overflow-hidden">
     <!-- Barra lateral clara -->
     <aside class="w-64 bg-white border-r border-slate-200 flex flex-col shrink-0 z-20">
-      <div class="h-[73px] px-5 flex items-center border-b border-slate-100">
-        <img :src="imagotipoUrl" alt="UrbanSphere" class="h-8 object-contain" />
+      <div class="h-16 px-4 flex items-center border-b border-slate-100 shrink-0">
+        <router-link to="/" class="flex items-center gap-2.5 min-w-0 w-full">
+          <img
+            :src="isotipoUrl"
+            alt=""
+            class="h-9 w-9 shrink-0 object-contain"
+            aria-hidden="true"
+          />
+          <span class="text-[15px] font-black tracking-tight leading-none truncate">
+            <span class="text-[#003399]">Urban</span><span class="text-slate-700">Sphere</span>
+          </span>
+        </router-link>
       </div>
 
       <!-- Tarjeta usuario -->
