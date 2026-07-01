@@ -6,8 +6,18 @@ import { esUsuarioEstandar, puedeListarUsuarios } from '../constants/roles';
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
+    name: 'inicio',
+    component: () => import('../views/InicioView.vue') // Landing Page
+  },
+  {
+    path: '/catalogo',
     name: 'catalogo',
     component: CatalogoView,
+  },
+  {
+    path: '/contacto',
+    name: 'contacto',
+    component: () => import('../views/ContactoView.vue') // Formulario RabbitMQ
   },
   {
     path: '/login',
@@ -23,6 +33,11 @@ const routes: Array<RouteRecordRaw> = [
     path: '/restablecer-contrasena',
     name: 'restablecer-contrasena',
     component: () => import('../views/RestablecerContrasenaView.vue'),
+  },
+  {
+    path: '/registro',
+    name: 'registro',
+    component: () => import('../views/RegisterView.vue') // Vista de registro
   },
   {
     path: '/propiedad/:id',
@@ -47,6 +62,12 @@ const routes: Array<RouteRecordRaw> = [
     meta: { requiresAdmin: true },
     component: () => import('../views/AdminPerfilView.vue'),
   },
+  {
+    path: '/reservas',
+    name: 'user-reservas',
+    component: () => import('../views/UserReservasView.vue'), // Panel del usuario
+    meta: { requiresAuth: true } // Adaptado al logic de HEAD o simplemente requiere auth
+  }
 ];
 
 const router = createRouter({
@@ -68,7 +89,7 @@ async function resolverRolId(): Promise<number | null> {
 }
 
 router.beforeEach(async (to) => {
-  if (to.meta.requiresAdmin) {
+  if (to.meta.requiresAdmin || to.meta.requiresAuth) {
     if (!authService.estaAutenticado()) {
       return { name: 'login' };
     }
@@ -76,12 +97,14 @@ router.beforeEach(async (to) => {
     const rolId = await resolverRolId();
     if (rolId === null) return { name: 'login' };
 
-    if (esUsuarioEstandar(rolId)) {
-      return { name: 'catalogo' };
-    }
+    if (to.meta.requiresAdmin) {
+      if (esUsuarioEstandar(rolId)) {
+        return { name: 'user-reservas' };
+      }
 
-    if (to.meta.requiresUserList && !puedeListarUsuarios(rolId)) {
-      return { name: 'admin-form' };
+      if (to.meta.requiresUserList && !puedeListarUsuarios(rolId)) {
+        return { name: 'admin-form' };
+      }
     }
   }
 });

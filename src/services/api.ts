@@ -58,6 +58,10 @@ api.interceptors.response.use(
         localStorage.removeItem(STORAGE_KEYS.usuario)
         window.location.href = '/login'
       }
+    } else if (error.response) {
+      console.error(`[API Error ${error.response.status}]:`, error.response.data);
+    } else {
+      console.error('[Network Error]: No se pudo conectar con el servidor backend.');
     }
     return Promise.reject(error)
   },

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { MapPin, Sparkles, CloudUpload, Image as ImageIcon, Save } from 'lucide-vue-next';
 import AdminLayout from '../layouts/AdminLayout.vue';
 
 const titulo = ref('');
@@ -64,7 +65,7 @@ const llamarGemini = () => {
           </div>
           
           <div class="flex-1 bg-slate-100 rounded-xl border border-slate-200 min-h-[140px] flex flex-col items-center justify-center text-center p-4 relative overflow-hidden">
-            <span class="text-2xl z-10">📍</span>
+            <MapPin class="w-8 h-8 text-red-500 z-10" />
             <p class="text-[11px] text-slate-500 font-semibold mt-1 z-10">Mapa Base de Carga</p>
             <span class="text-[9px] text-slate-400 z-10">Arrastra el marcador para precisar</span>
             <div class="absolute inset-0 opacity-25 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:12px_12px]"></div>
@@ -91,7 +92,7 @@ const llamarGemini = () => {
             Contenido Inteligente
           </div>
           <button @click="llamarGemini" :disabled="generandoIa" class="bg-white border border-slate-200 hover:border-blue-300 text-slate-700 hover:text-[#003399] text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-sm disabled:opacity-50 cursor-pointer">
-            <span>✨</span> {{ generandoIa ? 'Redactando...' : 'Generar descripción comercial con Gemini IA' }}
+            <Sparkles class="w-4 h-4 text-amber-400" /> {{ generandoIa ? 'Redactando...' : 'Generar descripción comercial con Gemini IA' }}
           </button>
         </div>
 
@@ -110,7 +111,7 @@ const llamarGemini = () => {
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="border-2 border-dashed border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center text-center bg-slate-50/50 hover:bg-slate-50 transition-colors cursor-pointer">
-            <span class="text-3xl">☁️</span>
+            <CloudUpload class="w-10 h-10 text-slate-300" />
             <p class="text-xs font-bold text-slate-700 mt-2">Arrastra y suelta imágenes aquí</p>
             <p class="text-[10px] text-slate-400 mt-1">Formatos: JPG, PNG, WebP • Máx 10MB</p>
           </div>
@@ -123,7 +124,7 @@ const llamarGemini = () => {
               <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">Activa esta opción si deseas subir un recorrido virtual inmersivo esférico para el proyecto.</p>
             </div>
             <div class="border border-slate-200 bg-white rounded-xl p-3 flex items-center gap-3 text-left mt-4">
-              <span class="text-xl">🔄</span>
+              <ImageIcon class="w-6 h-6 text-slate-400" />
               <div>
                 <p class="text-[11px] font-bold text-slate-700">Seleccionar imagen panorámica 360°</p>
                 <p class="text-[9px] text-slate-400">Formatos: JPG • Max 20MB</p>
@@ -136,7 +137,7 @@ const llamarGemini = () => {
       <div class="flex justify-end gap-3 pt-2 border-t border-slate-200/60">
         <button class="px-5 py-2.5 rounded-xl font-bold text-xs text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer">Cancelar</button>
         <button class="px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-[#003399] hover:bg-blue-800 transition-all shadow-md cursor-pointer flex items-center gap-2">
-          <span>💾</span> Guardar Proyecto
+          <Save class="w-4 h-4" /> Guardar Proyecto
         </button>
       </div>
 

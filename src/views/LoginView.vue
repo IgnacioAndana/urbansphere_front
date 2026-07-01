@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-vue-next'
 import { authService } from '../services/usuarios'
 import { obtenerMensajeErrorLogin } from '../utils/apiError'
 import { redirigirTrasLogin, rutaSiYaAutenticado } from '../utils/authRedirect'
@@ -10,6 +11,7 @@ const router = useRouter()
 
 const email = ref('')
 const contrasena = ref('')
+const mostrarContrasena = ref(false)
 const cargando = ref(false)
 const errorMsg = ref('')
 
@@ -74,16 +76,24 @@ const manejarLogin = async () => {
           <div>
             <label class="block text-sm font-bold text-slate-900 mb-2">Correo electrónico</label>
             <div class="relative">
-              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">✉️</span>
-              <input v-model="email" type="email" placeholder="juan@example.com" class="w-full border border-slate-300 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#003399] transition-colors" required />
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                <Mail class="w-5 h-5" />
+              </span>
+              <input v-model="email" type="email" placeholder="ejemplo@correo.com" class="w-full border border-slate-300 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#003399] transition-colors" required />
             </div>
           </div>
           
           <div>
             <label class="block text-sm font-bold text-slate-900 mb-2">Contraseña</label>
             <div class="relative">
-              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">🔒</span>
-              <input v-model="contrasena" type="password" placeholder="Ingresa tu contraseña" class="w-full border border-slate-300 rounded-xl pl-10 pr-10 py-3 text-sm focus:outline-none focus:border-[#003399] transition-colors" required />
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                <Lock class="w-5 h-5" />
+              </span>
+              <input v-model="contrasena" :type="mostrarContrasena ? 'text' : 'password'" placeholder="Ingresa tu contraseña" class="w-full border border-slate-300 rounded-xl pl-10 pr-10 py-3 text-sm focus:outline-none focus:border-[#003399] transition-colors" required />
+              <button type="button" @click="mostrarContrasena = !mostrarContrasena" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none cursor-pointer">
+                <EyeOff v-if="mostrarContrasena" class="w-5 h-5" />
+                <Eye v-else class="w-5 h-5" />
+              </button>
             </div>
           </div>
 
@@ -96,9 +106,12 @@ const manejarLogin = async () => {
           </button>
         </form>
 
-        <div class="text-center">
-          <router-link to="/" class="text-sm font-bold text-slate-500 hover:text-[#003399] transition-colors flex items-center justify-center gap-1">
-            ← Volver al Catálogo Público
+        <div class="text-center flex flex-col gap-3">
+          <!-- <router-link to="/registro" class="text-sm font-bold text-slate-600 hover:text-[#003399] transition-colors">
+            ¿No tienes cuenta? Regístrate aquí
+          </router-link> -->
+          <router-link to="/" class="text-sm font-bold text-slate-400 hover:text-[#003399] transition-colors flex items-center justify-center gap-1">
+            <ArrowLeft class="w-4 h-4" /> Volver al Catálogo Público
           </router-link>
         </div>
 
