@@ -22,9 +22,13 @@ import type {
   PerfilUsuario,
   RefrescarTokenDto,
   RefrescarTokenRespuesta,
+  RestablecerContrasenaDto,
   Rol,
+  SolicitarRestablecimientoDto,
+  SolicitarRestablecimientoRespuesta,
+  ValidarTokenRestablecimientoDto,
 } from '../../types/usuarios'
-import { esUsuarioEstandar, puedeAccederPanelAdmin, ROLES } from '../../constants/roles'
+import { esAdmin, esUsuarioEstandar, puedeAccederPanelAdmin, ROLES } from '../../constants/roles'
 
 type UsuarioSesion = IniciarSesionRespuesta['usuario'] | PerfilUsuario
 
@@ -163,12 +167,54 @@ export const authService = {
     return usuario.rol?.nombre ?? null
   },
 
+  obtenerUsuarioIdLocal(): number | null {
+    const usuario = this.obtenerUsuarioLocal()
+    return usuario?.id ?? null
+  },
+
+  obtenerEmailLocal(): string | null {
+    const usuario = this.obtenerUsuarioLocal()
+    return usuario?.email ?? null
+  },
+
   puedeAccederPanelAdmin(): boolean {
     return puedeAccederPanelAdmin(this.obtenerRolIdLocal())
   },
 
+  esAdmin(): boolean {
+    return esAdmin(this.obtenerRolIdLocal())
+  },
+
   esUsuarioEstandar(): boolean {
     return esUsuarioEstandar(this.obtenerRolIdLocal())
+  },
+
+  /**
+   * POST /autenticacion/solicitar-restablecimiento
+   * Usado en: OlvideContrasenaView.vue
+   */
+  async solicitarRestablecimiento(dto: SolicitarRestablecimientoDto): Promise<SolicitarRestablecimientoRespuesta> {
+    const { data } = await api.post<SolicitarRestablecimientoRespuesta>(
+      '/autenticacion/solicitar-restablecimiento',
+      dto,
+    )
+    return data
+  },
+
+  /**
+   * POST /autenticacion/validar-token-restablecimiento
+   * Usado en: RestablecerContrasenaView.vue
+   */
+  async validarTokenRestablecimiento(dto: ValidarTokenRestablecimientoDto): Promise<void> {
+    await api.post('/autenticacion/validar-token-restablecimiento', dto)
+  },
+
+  /**
+   * POST /autenticacion/restablecer-contrasena
+   * Usado en: RestablecerContrasenaView.vue
+   */
+  async restablecerContrasena(dto: RestablecerContrasenaDto): Promise<void> {
+    await api.post('/autenticacion/restablecer-contrasena', dto)
   },
 
   estaAutenticado(): boolean {

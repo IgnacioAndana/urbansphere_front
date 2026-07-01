@@ -1,26 +1,15 @@
 /**
- * Tipos del MS Usuarios — alineados con context/init-all.sql y Readme_ms_usuarios.md
+ * Tipos del MS Usuarios — context/Readme_ms_usuarios.md
  *
- * Tablas BD (esquema porsusde_urbansphere):
- * - usuarios: id, uuid, nombre, email, hash_contrasena, rol_id, activo, creado_en, actualizado_en
- * - roles: id, nombre, descripcion
- * - permisos: id, nombre
- * - tokens_refresco: usuario_id, token, expira_en
- *
- * La API expone JSON en español (camelCase) y fechas como dd-mm-yyyy HH:mm:ss.
+ * Roles fijos: admin (1), user (2), agent (3)
+ * Permisos por rol en código (sin tablas permisos/rol_permisos)
  */
 
-/** Rol del sistema: admin | user | agent (tabla `roles`) */
+/** Rol del sistema: admin | user | agent */
 export interface Rol {
   id: number
   nombre: string
   descripcion?: string
-}
-
-/** Permiso granular (tabla `permisos`, ej. users.read) */
-export interface Permiso {
-  id: number
-  nombre: string
 }
 
 /** Usuario tal como lo devuelve la API (sin hash_contrasena) */
@@ -35,10 +24,8 @@ export interface Usuario {
   actualizadoEn?: string
 }
 
-/** Perfil extendido del usuario autenticado (GET /autenticacion/perfil) */
-export interface PerfilUsuario extends Usuario {
-  permisos?: Permiso[]
-}
+/** Perfil del usuario autenticado (GET /autenticacion/perfil) */
+export type PerfilUsuario = Usuario
 
 // --- Autenticación ---
 
@@ -68,22 +55,66 @@ export interface CerrarSesionDto {
   tokenRefresco: string
 }
 
+export interface SolicitarRestablecimientoDto {
+  email: string
+}
+
+export interface SolicitarRestablecimientoRespuesta {
+  mensaje: string
+  email: string
+}
+
+export interface ValidarTokenRestablecimientoDto {
+  token: string
+}
+
+export interface RestablecerContrasenaDto {
+  token: string
+  contrasena: string
+}
+
 // --- CRUD usuarios ---
 
+/** Registro público (sin JWT) — siempre rol user */
 export interface RegistrarUsuarioDto {
   nombre: string
   email: string
   contrasena: string
-  /** Opcional; por defecto el MS asigna rol `user` (rol_id = 2) */
-  rolId?: number
 }
 
+/** Crear usuario con rol — solo admin autenticado */
+export interface CrearUsuarioAdminDto extends RegistrarUsuarioDto {
+  rolId: number
+}
+
+/** Propio perfil: nombre, email, contrasena. Admin/agent además: rolId, activo */
 export interface ActualizarUsuarioDto {
   nombre?: string
   email?: string
   contrasena?: string
   rolId?: number
   activo?: boolean
+}
+
+/** Actualización del perfil propio (user, admin, agent) */
+export interface ActualizarPerfilPropioDto {
+  nombre?: string
+  email?: string
+  contrasena?: string
+}
+
+// --- Solicitudes de interés ---
+
+export interface SolicitudInteresDto {
+  proyectoId: number
+  nombre: string
+  email: string
+}
+
+export interface SolicitudInteres extends SolicitudInteresDto {
+  id: number
+  usuarioId?: number | null
+  creadoEn?: string
 }
 
 /** Respuesta de error estándar del BFF / NestJS */

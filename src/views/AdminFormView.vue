@@ -22,7 +22,7 @@ const llamarGemini = () => {
 </script>
 
 <template>
-  <AdminLayout>
+  <AdminLayout titulo="Proyectos">
     <div class="max-w-5xl mx-auto flex flex-col gap-6">
       
       <div>

@@ -92,7 +92,7 @@ const manejarLogin = async () => {
               <input type="checkbox" class="rounded text-[#003399] focus:ring-[#003399]" />
               Recuérdame
             </label>
-            <a href="#" class="text-[#003399] font-semibold hover:underline">¿Olvidaste tu contraseña?</a>
+            <router-link to="/olvide-contrasena" class="text-[#003399] font-semibold hover:underline">¿Olvidaste tu contraseña?</router-link>
           </div>
 
           <button type="submit" :disabled="cargando" class="w-full bg-[#003399] text-white py-3.5 rounded-xl font-bold hover:bg-blue-800 transition-colors mt-2 cursor-pointer disabled:opacity-50">

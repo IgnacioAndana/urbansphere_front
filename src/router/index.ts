@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
 import CatalogoView from '../views/CatalogoView.vue';
 import { authService } from '../services/usuarios';
-import { esUsuarioEstandar } from '../constants/roles';
+import { esUsuarioEstandar, puedeListarUsuarios } from '../constants/roles';
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -15,6 +15,16 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/LoginView.vue'),
   },
   {
+    path: '/olvide-contrasena',
+    name: 'olvide-contrasena',
+    component: () => import('../views/OlvideContrasenaView.vue'),
+  },
+  {
+    path: '/restablecer-contrasena',
+    name: 'restablecer-contrasena',
+    component: () => import('../views/RestablecerContrasenaView.vue'),
+  },
+  {
     path: '/propiedad/:id',
     name: 'detalle',
     component: () => import('../views/DetalleView.vue'),
@@ -25,6 +35,12 @@ const routes: Array<RouteRecordRaw> = [
     meta: { requiresAdmin: true },
     component: () => import('../views/AdminFormView.vue'),
   },
+  {
+    path: '/admin/usuarios',
+    name: 'admin-usuarios',
+    meta: { requiresAdmin: true, requiresUserList: true },
+    component: () => import('../views/AdminUsuariosView.vue'),
+  },
 ];
 
 const router = createRouter({
@@ -32,24 +48,34 @@ const router = createRouter({
   routes,
 });
 
+async function resolverRolId(): Promise<number | null> {
+  let rolId = authService.obtenerRolIdLocal();
+  if (rolId === null && authService.estaAutenticado()) {
+    try {
+      await authService.obtenerPerfil();
+      rolId = authService.obtenerRolIdLocal();
+    } catch {
+      return null;
+    }
+  }
+  return rolId;
+}
+
 router.beforeEach(async (to) => {
   if (to.meta.requiresAdmin) {
     if (!authService.estaAutenticado()) {
       return { name: 'login' };
     }
 
-    let rolId = authService.obtenerRolIdLocal();
-    if (rolId === null) {
-      try {
-        await authService.obtenerPerfil();
-        rolId = authService.obtenerRolIdLocal();
-      } catch {
-        return { name: 'login' };
-      }
-    }
+    const rolId = await resolverRolId();
+    if (rolId === null) return { name: 'login' };
 
     if (esUsuarioEstandar(rolId)) {
       return { name: 'catalogo' };
+    }
+
+    if (to.meta.requiresUserList && !puedeListarUsuarios(rolId)) {
+      return { name: 'admin-form' };
     }
   }
 });

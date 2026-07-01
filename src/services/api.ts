@@ -1,7 +1,6 @@
 import axios from 'axios'
 import { API_BASE_URL } from '../config/env'
 
-/** Claves de almacenamiento local para la sesión JWT */
 export const STORAGE_KEYS = {
   tokenAcceso: 'urbansphere_token',
   tokenRefresco: 'urbansphere_refresh_token',
@@ -12,13 +11,11 @@ const RUTAS_PUBLICAS_POST = [
   '/autenticacion/iniciar-sesion',
   '/autenticacion/refrescar',
   '/autenticacion/cerrar-sesion',
+  '/autenticacion/solicitar-restablecimiento',
+  '/autenticacion/validar-token-restablecimiento',
+  '/autenticacion/restablecer-contrasena',
 ]
 
-/**
- * Cliente HTTP centralizado.
- * Apunta al BFF (nginx) que enruta hacia los microservicios.
- * Base URL: VITE_API_BASE_URL
- */
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 15000,
@@ -28,30 +25,34 @@ const api = axios.create({
   },
 })
 
-/** Inyecta el JWT de acceso en peticiones protegidas */
 api.interceptors.request.use((config) => {
+  const metodo = config.method?.toLowerCase()
   const esPostPublico =
-    config.method?.toLowerCase() === 'post' &&
+    metodo === 'post' &&
     RUTAS_PUBLICAS_POST.some((ruta) => config.url === ruta || config.url?.endsWith(ruta))
 
-  const esRegistro = config.method?.toLowerCase() === 'post' && config.url === '/usuarios'
+  /** Registro público sin JWT; con JWT el admin crea usuarios */
+  const esRegistroPublico =
+    metodo === 'post' &&
+    config.url === '/usuarios' &&
+    !localStorage.getItem(STORAGE_KEYS.tokenAcceso)
 
   const token = localStorage.getItem(STORAGE_KEYS.tokenAcceso)
-  if (token && config.headers && !esPostPublico && !esRegistro) {
+  if (token && config.headers && !esPostPublico && !esRegistroPublico) {
     config.headers.Authorization = `Bearer ${token}`
   }
   return config
 })
 
-/** Manejo global de 401: limpia sesión solo si ya había token (no en intento de login) */
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       const teniaSesion = Boolean(localStorage.getItem(STORAGE_KEYS.tokenAcceso))
-      const enLogin = window.location.pathname === '/login'
+      const rutasPublicas = ['/login', '/olvide-contrasena', '/restablecer-contrasena']
+      const enRutaPublica = rutasPublicas.some((r) => window.location.pathname.startsWith(r))
 
-      if (teniaSesion && !enLogin) {
+      if (teniaSesion && !enRutaPublica) {
         localStorage.removeItem(STORAGE_KEYS.tokenAcceso)
         localStorage.removeItem(STORAGE_KEYS.tokenRefresco)
         localStorage.removeItem(STORAGE_KEYS.usuario)
