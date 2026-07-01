@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue';
 import { CalendarClock, Info, LogOut } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 import PublicLayout from '../layouts/PublicLayout.vue';
-import { authService } from '../services/authService';
+import { authService } from '../services/usuarios';
 
 const router = useRouter();
 const usuarioActual = ref({ nombre: 'Usuario', iniciales: 'US' });
@@ -23,7 +23,7 @@ onMounted(() => {
 });
 
 const cerrarSesion = () => {
-  authService.logout();
+  authService.cerrarSesion();
   router.push('/');
 };
 </script>

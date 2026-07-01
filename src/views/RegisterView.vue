@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { ArrowLeft } from 'lucide-vue-next';
-import { authService, type RegisterData } from '../services/authService';
+import { ArrowLeft, Eye, EyeOff } from 'lucide-vue-next';
+import { usuariosService } from '../services/usuarios';
+import type { RegistrarUsuarioDto } from '../types/usuarios';
 import isotipoUrl from '../assets/UrbanSphere-Isotipo.png';
 
 const router = useRouter();
@@ -10,7 +11,7 @@ const router = useRouter();
 const nombre = ref('');
 const email = ref('');
 const contrasena = ref('');
-const rolId = 2; // Hardcodeado a 2 (Usuario estándar)
+const mostrarContrasena = ref(false);
 
 const cargando = ref(false);
 const errorMsg = ref('');
@@ -22,14 +23,13 @@ const manejarRegistro = async () => {
   exitoMsg.value = '';
   
   try {
-    const data: RegisterData = {
+    const data: RegistrarUsuarioDto = {
       nombre: nombre.value,
       email: email.value,
-      contrasena: contrasena.value,
-      rolId: rolId // Siempre 2 para registro público
+      contrasena: contrasena.value
     };
     
-    await authService.register(data);
+    await usuariosService.registrarPublico(data);
     exitoMsg.value = '¡Usuario registrado con éxito! Redirigiendo al login...';
     
     setTimeout(() => {
@@ -94,7 +94,13 @@ const manejarRegistro = async () => {
           
           <div>
             <label class="block text-sm font-bold text-slate-900 mb-1">Contraseña</label>
-            <input v-model="contrasena" type="password" placeholder="Crea una contraseña segura" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#003399] transition-colors" required />
+            <div class="relative">
+              <input v-model="contrasena" :type="mostrarContrasena ? 'text' : 'password'" placeholder="Crea una contraseña segura" class="w-full border border-slate-300 rounded-xl px-4 pr-10 py-2.5 text-sm focus:outline-none focus:border-[#003399] transition-colors" required />
+              <button type="button" @click="mostrarContrasena = !mostrarContrasena" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none cursor-pointer">
+                <EyeOff v-if="mostrarContrasena" class="w-5 h-5" />
+                <Eye v-else class="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           <!-- Selector de Rol eliminado, siempre es Usuario Estándar -->

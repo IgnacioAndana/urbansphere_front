@@ -107,9 +107,9 @@ const manejarLogin = async () => {
         </form>
 
         <div class="text-center flex flex-col gap-3">
-          <!-- <router-link to="/registro" class="text-sm font-bold text-slate-600 hover:text-[#003399] transition-colors">
+          <router-link to="/registro" class="text-sm font-bold text-slate-600 hover:text-[#003399] transition-colors">
             ¿No tienes cuenta? Regístrate aquí
-          </router-link> -->
+          </router-link>
           <router-link to="/" class="text-sm font-bold text-slate-400 hover:text-[#003399] transition-colors flex items-center justify-center gap-1">
             <ArrowLeft class="w-4 h-4" /> Volver al Catálogo Público
           </router-link>
