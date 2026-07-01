@@ -19,6 +19,7 @@ import type {
   RegistrarUsuarioDto,
   Usuario,
 } from '../../types/usuarios'
+import { normalizarUsuarioApi } from '../../utils/normalizarUsuario'
 import { authService } from './authService'
 
 export const usuariosService = {
@@ -36,8 +37,10 @@ export const usuariosService = {
 
   /** GET /usuarios — admin y agent */
   async listar(): Promise<Usuario[]> {
-    const { data } = await api.get<Usuario[]>('/usuarios')
-    return data
+    const { data } = await api.get<unknown[]>('/usuarios')
+    return (Array.isArray(data) ? data : [])
+      .map((item) => normalizarUsuarioApi(item))
+      .filter((u): u is Usuario => u !== null)
   },
 
   async obtenerPorId(id: number): Promise<Usuario> {

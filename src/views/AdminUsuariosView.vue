@@ -1,18 +1,26 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import AdminLayout from '../layouts/AdminLayout.vue'
-import { usuariosService, rolesService } from '../services/usuarios'
+import { usuariosService, rolesService, authService } from '../services/usuarios'
 import { useSesion } from '../composables/useSesion'
-import { ROLES } from '../constants/roles'
+import {
+  ROLES,
+  nombreRolPorId,
+  idsUsuarioCoinciden,
+} from '../constants/roles'
 import { obtenerMensajeError } from '../utils/apiError'
 import type { Rol, Usuario } from '../types/usuarios'
 
-const { puedeCrearEliminarUsuarios } = useSesion()
+const { puedeCrearEliminarUsuarios, cargarSesion } = useSesion()
 
 const usuarios = ref<Usuario[]>([])
 const roles = ref<Rol[]>([])
 const cargando = ref(true)
 const errorMsg = ref('')
+
+/** Id y email del perfil real (GET /autenticacion/perfil), no del JWT */
+const miUsuarioId = ref<number | null>(null)
+const miEmail = ref<string | null>(null)
 
 const modalAgregar = ref(false)
 const guardando = ref(false)
@@ -23,9 +31,26 @@ const nuevoEmail = ref('')
 const nuevoContrasena = ref('')
 const nuevoRolId = ref(ROLES.USER)
 
-const rolLabel = (u: Usuario) => u.rol?.nombre ?? `rol #${u.rolId ?? '?'}`
+const esMiCuenta = (u: Usuario) => {
+  if (miUsuarioId.value !== null && idsUsuarioCoinciden(u.id, miUsuarioId.value)) return true
+  if (miEmail.value && u.email.toLowerCase() === miEmail.value.toLowerCase()) return true
+  return false
+}
+
+async function resolverCuentaPropia() {
+  try {
+    const perfil = await authService.obtenerPerfil()
+    miUsuarioId.value = perfil.id
+    miEmail.value = perfil.email
+  } catch {
+    miUsuarioId.value = authService.obtenerUsuarioLocal()?.id ?? null
+    miEmail.value = authService.obtenerEmailLocal()
+  }
+}
 
 onMounted(async () => {
+  await cargarSesion()
+  await resolverCuentaPropia()
   await cargarLista()
   if (puedeCrearEliminarUsuarios.value) {
     try {
@@ -81,6 +106,10 @@ const crearUsuario = async () => {
 }
 
 const eliminarUsuario = async (u: Usuario) => {
+  if (esMiCuenta(u)) {
+    errorMsg.value = 'No puedes eliminar tu propia cuenta mientras tienes la sesión iniciada.'
+    return
+  }
   if (!confirm(`¿Eliminar a ${u.nombre} (${u.email})?`)) return
   try {
     await usuariosService.eliminar(u.id)
@@ -132,17 +161,33 @@ const rolesParaSelect = computed(() =>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="u in usuarios" :key="u.id" class="border-b border-slate-100 hover:bg-slate-50/50">
-              <td class="px-4 py-3 font-medium text-slate-800">{{ u.nombre }}</td>
+            <tr
+              v-for="u in usuarios"
+              :key="u.id"
+              class="border-b border-slate-100 hover:bg-slate-50/50"
+              :class="esMiCuenta(u) ? 'bg-[#003399]/5' : ''"
+            >
+              <td class="px-4 py-3 font-medium text-slate-800">
+                {{ u.nombre }}
+                <span v-if="esMiCuenta(u)" class="ml-1 text-[10px] font-bold uppercase text-[#003399]">(Tú)</span>
+              </td>
               <td class="px-4 py-3 text-slate-600">{{ u.email }}</td>
-              <td class="px-4 py-3 capitalize">{{ rolLabel(u) }}</td>
+              <td class="px-4 py-3">{{ nombreRolPorId(u.rolId) }}</td>
               <td class="px-4 py-3">
                 <span :class="u.activo !== false ? 'text-emerald-600' : 'text-red-500'" class="font-semibold text-xs">
                   {{ u.activo !== false ? 'Activo' : 'Inactivo' }}
                 </span>
               </td>
               <td v-if="puedeCrearEliminarUsuarios" class="px-4 py-3 text-right">
-                <button type="button" class="text-red-600 hover:text-red-800 font-bold text-xs" @click="eliminarUsuario(u)">
+                <span v-if="esMiCuenta(u)" class="text-xs text-slate-400 font-medium">
+                  Tu cuenta
+                </span>
+                <button
+                  v-else
+                  type="button"
+                  class="text-red-600 hover:text-red-800 font-bold text-xs"
+                  @click="eliminarUsuario(u)"
+                >
                   Eliminar
                 </button>
               </td>
@@ -153,7 +198,6 @@ const rolesParaSelect = computed(() =>
       </div>
     </div>
 
-    <!-- Modal agregar usuario (solo admin) -->
     <Teleport to="body">
       <div v-if="modalAgregar" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40" @click.self="modalAgregar = false">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-md border border-slate-200 p-6 flex flex-col gap-4">
@@ -164,7 +208,9 @@ const rolesParaSelect = computed(() =>
             <input v-model="nuevoEmail" type="email" placeholder="Email" required class="border border-slate-200 rounded-xl p-3 text-sm" />
             <input v-model="nuevoContrasena" type="password" placeholder="Contraseña" required class="border border-slate-200 rounded-xl p-3 text-sm" />
             <select v-model="nuevoRolId" class="border border-slate-200 rounded-xl p-3 text-sm bg-white">
-              <option v-for="r in rolesParaSelect" :key="r.id" :value="r.id">{{ r.nombre }}</option>
+              <option v-for="r in rolesParaSelect" :key="r.id" :value="r.id">
+                {{ nombreRolPorId(r.id) }}
+              </option>
             </select>
             <div class="flex gap-2 pt-2">
               <button type="button" class="flex-1 border border-slate-200 py-2 rounded-xl text-sm font-bold" @click="modalAgregar = false">Cancelar</button>

@@ -87,11 +87,7 @@ const manejarLogin = async () => {
             </div>
           </div>
 
-          <div class="flex items-center justify-between text-sm">
-            <label class="flex items-center gap-2 cursor-pointer text-slate-600">
-              <input type="checkbox" class="rounded text-[#003399] focus:ring-[#003399]" />
-              Recuérdame
-            </label>
+          <div class="flex justify-end text-sm">
             <router-link to="/olvide-contrasena" class="text-[#003399] font-semibold hover:underline">¿Olvidaste tu contraseña?</router-link>
           </div>
 
