@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { authService, usuariosService } from '../services/usuarios'
+import CampoContrasena from './CampoContrasena.vue'
 import { obtenerMensajeError } from '../utils/apiError'
 
 const props = defineProps<{
@@ -47,9 +48,15 @@ const guardar = async () => {
   errorMsg.value = ''
   exitoMsg.value = ''
 
-  if (contrasena.value && contrasena.value !== contrasenaConfirm.value) {
-    errorMsg.value = 'Las contraseñas no coinciden.'
-    return
+  if (contrasena.value || contrasenaConfirm.value) {
+    if (!contrasena.value || !contrasenaConfirm.value) {
+      errorMsg.value = 'Debes completar ambos campos de contraseña.'
+      return
+    }
+    if (contrasena.value !== contrasenaConfirm.value) {
+      errorMsg.value = 'Las contraseñas no coinciden.'
+      return
+    }
   }
 
   guardando.value = true
@@ -78,7 +85,6 @@ const guardar = async () => {
     <div
       v-if="abierto"
       class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40"
-      @click.self="cerrar"
     >
       <div
         role="dialog"
@@ -112,12 +118,12 @@ const guardar = async () => {
 
           <div>
             <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nueva contraseña (opcional)</label>
-            <input v-model="contrasena" type="password" autocomplete="new-password" class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:border-[#003399]" />
+            <CampoContrasena v-model="contrasena" autocomplete="new-password" />
           </div>
 
-          <div v-if="contrasena">
+          <div>
             <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Confirmar contraseña</label>
-            <input v-model="contrasenaConfirm" type="password" autocomplete="new-password" class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:border-[#003399]" />
+            <CampoContrasena v-model="contrasenaConfirm" autocomplete="new-password" />
           </div>
 
           <div class="flex gap-2 pt-2">

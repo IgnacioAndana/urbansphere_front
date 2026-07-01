@@ -1,20 +1,21 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import AdminLayout from '../layouts/AdminLayout.vue'
-import { usuariosService, rolesService, authService } from '../services/usuarios'
+import CampoContrasena from '../components/CampoContrasena.vue'
+import { usuariosService, authService } from '../services/usuarios'
 import { useSesion } from '../composables/useSesion'
 import {
   ROLES,
   nombreRolPorId,
   idsUsuarioCoinciden,
+  NOMBRE_ROL_ES,
 } from '../constants/roles'
 import { obtenerMensajeError } from '../utils/apiError'
-import type { Rol, Usuario } from '../types/usuarios'
+import type { Usuario } from '../types/usuarios'
 
 const { puedeCrearEliminarUsuarios, cargarSesion } = useSesion()
 
 const usuarios = ref<Usuario[]>([])
-const roles = ref<Rol[]>([])
 const cargando = ref(true)
 const errorMsg = ref('')
 
@@ -29,6 +30,7 @@ const formError = ref('')
 const nuevoNombre = ref('')
 const nuevoEmail = ref('')
 const nuevoContrasena = ref('')
+const nuevoContrasenaConfirm = ref('')
 const nuevoRolId = ref(ROLES.USER)
 
 const esMiCuenta = (u: Usuario) => {
@@ -52,17 +54,6 @@ onMounted(async () => {
   await cargarSesion()
   await resolverCuentaPropia()
   await cargarLista()
-  if (puedeCrearEliminarUsuarios.value) {
-    try {
-      roles.value = await rolesService.listar()
-    } catch {
-      roles.value = [
-        { id: ROLES.ADMIN, nombre: 'admin' },
-        { id: ROLES.USER, nombre: 'user' },
-        { id: ROLES.AGENT, nombre: 'agent' },
-      ]
-    }
-  }
 })
 
 const cargarLista = async () => {
@@ -82,12 +73,17 @@ const abrirAgregar = () => {
   nuevoNombre.value = ''
   nuevoEmail.value = ''
   nuevoContrasena.value = ''
+  nuevoContrasenaConfirm.value = ''
   nuevoRolId.value = ROLES.USER
   modalAgregar.value = true
 }
 
 const crearUsuario = async () => {
   formError.value = ''
+  if (nuevoContrasena.value !== nuevoContrasenaConfirm.value) {
+    formError.value = 'Las contraseñas no coinciden.'
+    return
+  }
   guardando.value = true
   try {
     await usuariosService.crear({
@@ -119,8 +115,12 @@ const eliminarUsuario = async (u: Usuario) => {
   }
 }
 
+/** Roles fijos del sistema — no depende de GET /roles */
 const rolesParaSelect = computed(() =>
-  roles.value.filter((r) => (Object.values(ROLES) as number[]).includes(r.id)),
+  (Object.values(ROLES) as number[]).map((id) => ({
+    id,
+    label: NOMBRE_ROL_ES[id],
+  })),
 )
 </script>
 
@@ -199,19 +199,37 @@ const rolesParaSelect = computed(() =>
     </div>
 
     <Teleport to="body">
-      <div v-if="modalAgregar" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40" @click.self="modalAgregar = false">
+      <div v-if="modalAgregar" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-md border border-slate-200 p-6 flex flex-col gap-4">
           <h2 class="text-lg font-black text-slate-900">Nuevo usuario</h2>
           <div v-if="formError" class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl p-3">{{ formError }}</div>
           <form class="flex flex-col gap-3" @submit.prevent="crearUsuario">
             <input v-model="nuevoNombre" type="text" placeholder="Nombre" required class="border border-slate-200 rounded-xl p-3 text-sm" />
             <input v-model="nuevoEmail" type="email" placeholder="Email" required class="border border-slate-200 rounded-xl p-3 text-sm" />
-            <input v-model="nuevoContrasena" type="password" placeholder="Contraseña" required class="border border-slate-200 rounded-xl p-3 text-sm" />
-            <select v-model="nuevoRolId" class="border border-slate-200 rounded-xl p-3 text-sm bg-white">
-              <option v-for="r in rolesParaSelect" :key="r.id" :value="r.id">
-                {{ nombreRolPorId(r.id) }}
-              </option>
-            </select>
+            <CampoContrasena
+              v-model="nuevoContrasena"
+              placeholder="Contraseña"
+              required
+              autocomplete="new-password"
+            />
+            <CampoContrasena
+              v-model="nuevoContrasenaConfirm"
+              placeholder="Confirmar contraseña"
+              required
+              autocomplete="new-password"
+            />
+            <label class="flex flex-col gap-1.5">
+              <span class="text-xs font-bold text-slate-500">Rol</span>
+              <select
+                v-model.number="nuevoRolId"
+                required
+                class="w-full border border-slate-200 rounded-xl px-3 py-3 text-sm bg-white text-slate-900 cursor-pointer"
+              >
+                <option v-for="r in rolesParaSelect" :key="r.id" :value="r.id">
+                  {{ r.label }}
+                </option>
+              </select>
+            </label>
             <div class="flex gap-2 pt-2">
               <button type="button" class="flex-1 border border-slate-200 py-2 rounded-xl text-sm font-bold" @click="modalAgregar = false">Cancelar</button>
               <button type="submit" :disabled="guardando" class="flex-1 bg-[#003399] text-white py-2 rounded-xl text-sm font-bold disabled:opacity-50">
