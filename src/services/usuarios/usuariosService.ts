@@ -19,6 +19,7 @@ import type {
   RegistrarUsuarioDto,
   Usuario,
 } from '../../types/usuarios'
+import { authService } from './authService'
 
 export const usuariosService = {
   /** POST /usuarios — Registro público (sin JWT, rol user) */
@@ -50,9 +51,11 @@ export const usuariosService = {
     return data
   },
 
-  /** PATCH perfil propio — nombre, email, contrasena */
-  async actualizarPerfilPropio(id: number, dto: ActualizarPerfilPropioDto): Promise<Usuario> {
-    return this.actualizar(id, dto)
+  /** PATCH perfil propio — id desde GET /autenticacion/perfil (misma fuente que valida el backend) */
+  async actualizarMiPerfil(dto: ActualizarPerfilPropioDto): Promise<Usuario> {
+    const perfil = await authService.obtenerPerfil()
+    if (!perfil?.id) throw new Error('No hay sesión activa')
+    return this.actualizar(perfil.id, dto)
   },
 
   /** DELETE /usuarios/:id — solo admin */

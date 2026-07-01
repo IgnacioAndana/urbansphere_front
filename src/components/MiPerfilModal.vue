@@ -47,12 +47,6 @@ const guardar = async () => {
   errorMsg.value = ''
   exitoMsg.value = ''
 
-  const id = authService.obtenerUsuarioIdLocal()
-  if (!id) {
-    errorMsg.value = 'No hay sesión activa.'
-    return
-  }
-
   if (contrasena.value && contrasena.value !== contrasenaConfirm.value) {
     errorMsg.value = 'Las contraseñas no coinciden.'
     return
@@ -60,7 +54,7 @@ const guardar = async () => {
 
   guardando.value = true
   try {
-    await usuariosService.actualizarPerfilPropio(id, {
+    await usuariosService.actualizarMiPerfil({
       nombre: nombre.value.trim(),
       email: email.value.trim(),
       ...(contrasena.value ? { contrasena: contrasena.value } : {}),

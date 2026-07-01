@@ -29,6 +29,7 @@ import type {
   ValidarTokenRestablecimientoDto,
 } from '../../types/usuarios'
 import { esAdmin, esUsuarioEstandar, puedeAccederPanelAdmin, ROLES } from '../../constants/roles'
+import { obtenerIdUsuarioDesdeToken } from '../../utils/jwt'
 
 type UsuarioSesion = IniciarSesionRespuesta['usuario'] | PerfilUsuario
 
@@ -168,8 +169,10 @@ export const authService = {
   },
 
   obtenerUsuarioIdLocal(): number | null {
-    const usuario = this.obtenerUsuarioLocal()
-    return usuario?.id ?? null
+    const token = localStorage.getItem(STORAGE_KEYS.tokenAcceso)
+    const idJwt = obtenerIdUsuarioDesdeToken(token)
+    if (idJwt !== null) return idJwt
+    return this.obtenerUsuarioLocal()?.id ?? null
   },
 
   obtenerEmailLocal(): string | null {
