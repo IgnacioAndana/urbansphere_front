@@ -26,7 +26,7 @@ const llamarGemini = () => {
     <div class="max-w-5xl mx-auto flex flex-col gap-6">
       
       <div>
-        <h1 class="text-3xl font-black text-slate-900 tracking-tight">Nuevo Proyecto</h1>
+        <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Nuevo Proyecto</h1>
         <p class="text-slate-500 text-sm mt-1">Completa la información del proyecto para publicarlo en el catálogo comercial.</p>
       </div>
 

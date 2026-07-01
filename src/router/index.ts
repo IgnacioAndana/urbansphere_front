@@ -41,6 +41,12 @@ const routes: Array<RouteRecordRaw> = [
     meta: { requiresAdmin: true, requiresUserList: true },
     component: () => import('../views/AdminUsuariosView.vue'),
   },
+  {
+    path: '/admin/perfil',
+    name: 'admin-perfil',
+    meta: { requiresAdmin: true },
+    component: () => import('../views/AdminPerfilView.vue'),
+  },
 ];
 
 const router = createRouter({

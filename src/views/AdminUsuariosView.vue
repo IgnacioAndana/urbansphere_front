@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import AdminLayout from '../layouts/AdminLayout.vue'
 import CampoContrasena from '../components/CampoContrasena.vue'
+import ConfirmModal from '../components/ConfirmModal.vue'
 import { usuariosService, authService } from '../services/usuarios'
 import { useSesion } from '../composables/useSesion'
 import {
@@ -26,6 +27,9 @@ const miEmail = ref<string | null>(null)
 const modalAgregar = ref(false)
 const guardando = ref(false)
 const formError = ref('')
+
+const usuarioAEliminar = ref<Usuario | null>(null)
+const eliminando = ref(false)
 
 const nuevoNombre = ref('')
 const nuevoEmail = ref('')
@@ -101,17 +105,32 @@ const crearUsuario = async () => {
   }
 }
 
-const eliminarUsuario = async (u: Usuario) => {
+const solicitarEliminar = (u: Usuario) => {
   if (esMiCuenta(u)) {
     errorMsg.value = 'No puedes eliminar tu propia cuenta mientras tienes la sesión iniciada.'
     return
   }
-  if (!confirm(`¿Eliminar a ${u.nombre} (${u.email})?`)) return
+  usuarioAEliminar.value = u
+}
+
+const cancelarEliminar = () => {
+  if (!eliminando.value) usuarioAEliminar.value = null
+}
+
+const confirmarEliminar = async () => {
+  const u = usuarioAEliminar.value
+  if (!u) return
+
+  eliminando.value = true
+  errorMsg.value = ''
   try {
     await usuariosService.eliminar(u.id)
+    usuarioAEliminar.value = null
     await cargarLista()
   } catch (error) {
     errorMsg.value = obtenerMensajeError(error, 'No se pudo eliminar el usuario.')
+  } finally {
+    eliminando.value = false
   }
 }
 
@@ -129,7 +148,7 @@ const rolesParaSelect = computed(() =>
     <div class="max-w-5xl mx-auto flex flex-col gap-6">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 class="text-3xl font-black text-slate-900">Usuarios</h1>
+          <h1 class="text-2xl sm:text-3xl font-black text-slate-900">Usuarios</h1>
           <p class="text-slate-500 text-sm mt-1">
             {{ puedeCrearEliminarUsuarios ? 'Admin: agregar y eliminar usuarios.' : 'Agente: solo consulta.' }}
           </p>
@@ -150,7 +169,8 @@ const rolesParaSelect = computed(() =>
 
       <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
         <div v-if="cargando" class="p-8 text-center text-slate-500 text-sm">Cargando usuarios...</div>
-        <table v-else class="w-full text-sm">
+        <div v-else class="overflow-x-auto">
+        <table class="w-full text-sm min-w-[640px]">
           <thead class="bg-slate-50 border-b border-slate-200 text-left text-xs uppercase text-slate-500">
             <tr>
               <th class="px-4 py-3 font-bold">Nombre</th>
@@ -186,7 +206,7 @@ const rolesParaSelect = computed(() =>
                   v-else
                   type="button"
                   class="text-red-600 hover:text-red-800 font-bold text-xs"
-                  @click="eliminarUsuario(u)"
+                  @click="solicitarEliminar(u)"
                 >
                   Eliminar
                 </button>
@@ -194,6 +214,7 @@ const rolesParaSelect = computed(() =>
             </tr>
           </tbody>
         </table>
+        </div>
         <p v-if="!cargando && usuarios.length === 0" class="p-8 text-center text-slate-500">No hay usuarios registrados.</p>
       </div>
     </div>
@@ -240,5 +261,17 @@ const rolesParaSelect = computed(() =>
         </div>
       </div>
     </Teleport>
+
+    <ConfirmModal
+      :abierto="usuarioAEliminar !== null"
+      titulo="Eliminar usuario"
+      :mensaje="usuarioAEliminar ? `¿Eliminar a ${usuarioAEliminar.nombre} (${usuarioAEliminar.email})? Esta acción no se puede deshacer.` : ''"
+      confirmar-texto="Eliminar"
+      cancelar-texto="Cancelar"
+      peligro
+      :cargando="eliminando"
+      @confirmar="confirmarEliminar"
+      @cancelar="cancelarEliminar"
+    />
   </AdminLayout>
 </template>

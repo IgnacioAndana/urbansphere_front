@@ -1,10 +1,7 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { authService, usuariosService } from '../services/usuarios'
-import CampoContrasena from './CampoContrasena.vue'
-import { obtenerMensajeError } from '../utils/apiError'
+import MiPerfilForm from './MiPerfilForm.vue'
 
-const props = defineProps<{
+defineProps<{
   abierto: boolean
 }>()
 
@@ -12,72 +9,6 @@ const emit = defineEmits<{
   cerrar: []
   actualizado: []
 }>()
-
-const nombre = ref('')
-const email = ref('')
-const contrasena = ref('')
-const contrasenaConfirm = ref('')
-const guardando = ref(false)
-const errorMsg = ref('')
-const exitoMsg = ref('')
-
-watch(
-  () => props.abierto,
-  async (abierto) => {
-    if (!abierto) return
-    errorMsg.value = ''
-    exitoMsg.value = ''
-    contrasena.value = ''
-    contrasenaConfirm.value = ''
-
-    try {
-      const perfil = await authService.obtenerPerfil()
-      nombre.value = perfil.nombre
-      email.value = perfil.email
-    } catch {
-      const local = authService.obtenerUsuarioLocal()
-      nombre.value = local?.nombre ?? ''
-      email.value = local?.email ?? ''
-    }
-  },
-)
-
-const cerrar = () => emit('cerrar')
-
-const guardar = async () => {
-  errorMsg.value = ''
-  exitoMsg.value = ''
-
-  if (contrasena.value || contrasenaConfirm.value) {
-    if (!contrasena.value || !contrasenaConfirm.value) {
-      errorMsg.value = 'Debes completar ambos campos de contraseña.'
-      return
-    }
-    if (contrasena.value !== contrasenaConfirm.value) {
-      errorMsg.value = 'Las contraseñas no coinciden.'
-      return
-    }
-  }
-
-  guardando.value = true
-  try {
-    await usuariosService.actualizarMiPerfil({
-      nombre: nombre.value.trim(),
-      email: email.value.trim(),
-      ...(contrasena.value ? { contrasena: contrasena.value } : {}),
-    })
-    await authService.obtenerPerfil()
-    exitoMsg.value = 'Datos actualizados correctamente.'
-    emit('actualizado')
-    setTimeout(() => {
-      if (exitoMsg.value) cerrar()
-    }, 900)
-  } catch (error) {
-    errorMsg.value = obtenerMensajeError(error, 'No se pudo actualizar el perfil.')
-  } finally {
-    guardando.value = false
-  }
-}
 </script>
 
 <template>
@@ -93,48 +24,19 @@ const guardar = async () => {
       >
         <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <h2 id="mi-perfil-titulo" class="text-lg font-black text-slate-900">Mi perfil</h2>
-          <button type="button" class="text-slate-400 hover:text-slate-600 text-xl leading-none" @click="cerrar">×</button>
+          <button type="button" class="text-slate-400 hover:text-slate-600 text-xl leading-none" @click="emit('cerrar')">
+            ×
+          </button>
         </div>
 
-        <form class="p-6 flex flex-col gap-4" @submit.prevent="guardar">
-          <p class="text-xs text-slate-500">Actualiza tu nombre, correo o contraseña.</p>
-
-          <div v-if="errorMsg" role="alert" class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl p-3">
-            {{ errorMsg }}
-          </div>
-          <div v-if="exitoMsg" class="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl p-3">
-            {{ exitoMsg }}
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nombre</label>
-            <input v-model="nombre" type="text" required class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:border-[#003399]" />
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Correo</label>
-            <input v-model="email" type="email" required class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:border-[#003399]" />
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nueva contraseña (opcional)</label>
-            <CampoContrasena v-model="contrasena" autocomplete="new-password" />
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Confirmar contraseña</label>
-            <CampoContrasena v-model="contrasenaConfirm" autocomplete="new-password" />
-          </div>
-
-          <div class="flex gap-2 pt-2">
-            <button type="button" class="flex-1 border border-slate-200 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50" @click="cerrar">
-              Cancelar
-            </button>
-            <button type="submit" :disabled="guardando" class="flex-1 bg-[#003399] text-white py-2.5 rounded-xl text-sm font-bold hover:bg-blue-800 disabled:opacity-50">
-              {{ guardando ? 'Guardando...' : 'Guardar' }}
-            </button>
-          </div>
-        </form>
+        <div class="p-6">
+          <MiPerfilForm
+            :activo="abierto"
+            mostrar-cancelar
+            @actualizado="emit('actualizado')"
+            @cancelar="emit('cerrar')"
+          />
+        </div>
       </div>
     </div>
   </Teleport>
