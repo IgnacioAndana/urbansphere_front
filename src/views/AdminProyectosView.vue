@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, nextTick } from 'vue';
+import axios from 'axios';
 import { Sparkles, Image as Save, Plus, Trash2, Pencil, FolderPlus } from 'lucide-vue-next';
 import AdminLayout from '../layouts/AdminLayout.vue';
 import { proyectosService, tipologiasService } from '../services/proyectos';
 import type { CrearProyectoDto, CrearTipologiaDto, Proyecto } from '../types/proyectos';
+import { obtenerMensajeError } from '../utils/apiError';
 import * as L from 'leaflet';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import 'leaflet/dist/leaflet.css';
@@ -18,8 +20,14 @@ const cargarProyectos = async () => {
   errorLista.value = '';
   try {
     proyectos.value = await proyectosService.listar();
-  } catch (error: any) {
-    errorLista.value = error.response?.data?.message || 'Error al cargar los proyectos. Revisa el token o la BD.';
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      errorLista.value =
+        'No se pudo acceder a proyectos: el token de sesión no es válido para este microservicio. ' +
+        'Verifica en el backend que el JWT_SECRET sea el mismo en usuarios y proyectos, y que el BFF reenvíe el Authorization.';
+    } else {
+      errorLista.value = obtenerMensajeError(error, 'Error al cargar los proyectos.');
+    }
   } finally {
     cargandoLista.value = false;
   }
@@ -224,14 +232,14 @@ const formatDate = (dateString?: string) => {
     <div class="max-w-6xl mx-auto flex flex-col gap-6 relative">
       
       <!-- Encabezado y botón -->
-      <div class="flex justify-between items-end">
+      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
         <div>
-          <h1 class="text-3xl font-black text-slate-900 tracking-tight">Gestión de Proyectos</h1>
+          <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Gestión de Proyectos</h1>
           <p class="text-slate-500 text-sm mt-1">Administra los proyectos inmobiliarios del catálogo comercial.</p>
         </div>
         <button
           @click="abrirModal"
-          class="bg-[#003399] hover:bg-blue-800 text-white font-bold text-sm px-4 py-2 rounded-lg shadow transition-colors flex items-center gap-2 cursor-pointer"
+          class="w-full sm:w-auto bg-[#003399] hover:bg-blue-800 text-white font-bold text-sm px-4 py-2 rounded-lg shadow transition-colors flex items-center justify-center gap-2 cursor-pointer"
         >
           <FolderPlus class="w-4 h-4" /> Nuevo Proyecto
         </button>
@@ -302,7 +310,7 @@ const formatDate = (dateString?: string) => {
 
       <!-- Modal de Creación -->
       <Teleport to="body">
-        <div v-if="modalAbierto" class="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div v-if="modalAbierto" class="fixed inset-0 bg-slate-900/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 overflow-y-auto">
           <div class="bg-slate-50 rounded-2xl w-full max-w-4xl shadow-2xl flex flex-col border border-slate-200 max-h-[90vh]">
             <div class="p-6 bg-white border-b border-slate-200 flex justify-between items-center rounded-t-2xl sticky top-0 z-10">
               <h3 class="font-black text-slate-900 text-xl">Nuevo Proyecto Comercial</h3>

@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { LogOut, Settings, User } from 'lucide-vue-next'
 import imagotipoUrl from '../assets/UrbanSphere-Imagotipo.png'
 import MiPerfilModal from '../components/MiPerfilModal.vue'
 import { useSesion } from '../composables/useSesion'
+import { queryLoginDesde } from '../utils/authRedirect'
 
 const router = useRouter()
 const route = useRoute()
@@ -12,6 +13,8 @@ const { autenticado, nombre, accesoAdmin, cargarSesion, cerrarSesion } = useSesi
 const cerrando = ref(false)
 const perfilAbierto = ref(false)
 const menuAbierto = ref(false)
+
+const loginQuery = computed(() => queryLoginDesde(route.path, route.fullPath))
 
 onMounted(() => {
   cargarSesion()
@@ -57,7 +60,7 @@ const manejarCerrarSesion = async () => {
         <router-link to="/contacto" class="hover:text-[#003399] transition-colors py-1" exact-active-class="text-[#003399] border-b-2 border-[#003399]">Contacto</router-link>
         
         <template v-if="!autenticado">
-          <router-link to="/login" class="bg-[#003399] text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-all shadow-sm">
+          <router-link :to="{ name: 'login', query: loginQuery }" class="bg-[#003399] text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-all shadow-sm">
             Iniciar Sesión
           </router-link>
         </template>
@@ -164,7 +167,7 @@ const manejarCerrarSesion = async () => {
 
       <router-link
         v-else
-        to="/login"
+        :to="{ name: 'login', query: loginQuery }"
         class="bg-[#003399] text-white px-4 py-2.5 rounded-lg text-sm font-bold text-center"
         @click="menuAbierto = false"
       >

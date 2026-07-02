@@ -104,11 +104,11 @@ async function resolverRolId(): Promise<number | null> {
 router.beforeEach(async (to) => {
   if (to.meta.requiresAdmin || to.meta.requiresAuth) {
     if (!authService.estaAutenticado()) {
-      return { name: 'login' };
+      return { name: 'login', query: { returnTo: to.fullPath } };
     }
 
     const rolId = await resolverRolId();
-    if (rolId === null) return { name: 'login' };
+    if (rolId === null) return { name: 'login', query: { returnTo: to.fullPath } };
 
     if (to.meta.requiresAdmin) {
       if (esUsuarioEstandar(rolId)) {

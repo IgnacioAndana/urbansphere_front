@@ -35,6 +35,7 @@ const eliminando = ref(false)
 const nuevoNombre = ref('')
 const nuevoEmail = ref('')
 const nuevoContrasena = ref('')
+const nuevoContrasenaConfirm = ref('')
 const nuevoRolId = ref<number | undefined>(ROLES.USER)
 
 const esMiCuenta = (u: Usuario) => {
@@ -79,6 +80,7 @@ const abrirAgregar = () => {
   nuevoNombre.value = ''
   nuevoEmail.value = ''
   nuevoContrasena.value = ''
+  nuevoContrasenaConfirm.value = ''
   nuevoRolId.value = ROLES.USER
   modalAgregar.value = true
 }
@@ -89,13 +91,25 @@ const editarUsuario = (usuario: Usuario) => {
   usuarioEdicionId.value = usuario.id
   nuevoNombre.value = usuario.nombre
   nuevoEmail.value = usuario.email
-  nuevoContrasena.value = '' // Vacio si no quiere cambiar
+  nuevoContrasena.value = ''
+  nuevoContrasenaConfirm.value = ''
   nuevoRolId.value = usuario.rolId
   modalAgregar.value = true
 }
 
 const guardarUsuario = async () => {
   formError.value = ''
+
+  const requiereContrasena = !modoEdicion.value
+  const cambiaContrasena = modoEdicion.value && nuevoContrasena.value.trim().length > 0
+
+  if (requiereContrasena || cambiaContrasena) {
+    if (nuevoContrasena.value !== nuevoContrasenaConfirm.value) {
+      formError.value = 'Las contraseñas no coinciden.'
+      return
+    }
+  }
+
   guardando.value = true
   try {
     if (modoEdicion.value && usuarioEdicionId.value) {
@@ -176,9 +190,9 @@ const getRolBadge = (user: Usuario) => {
   <AdminLayout titulo="Gestión de Usuarios">
     <div class="max-w-6xl mx-auto flex flex-col gap-6">
       
-      <div class="flex justify-between items-end">
+      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
         <div>
-          <h1 class="text-3xl font-black text-slate-900 tracking-tight">Gestión de Usuarios</h1>
+          <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Gestión de Usuarios</h1>
           <p class="text-slate-500 text-sm mt-1">
             {{ puedeCrearEliminarUsuarios ? 'Administra los accesos y roles de la plataforma.' : 'Agente: solo consulta.' }}
           </p>
@@ -186,7 +200,7 @@ const getRolBadge = (user: Usuario) => {
         <button
           v-if="puedeCrearEliminarUsuarios"
           @click="abrirAgregar"
-          class="bg-[#003399] hover:bg-blue-800 text-white font-bold text-sm px-4 py-2 rounded-lg shadow transition-colors flex items-center gap-2 cursor-pointer"
+          class="w-full sm:w-auto bg-[#003399] hover:bg-blue-800 text-white font-bold text-sm px-4 py-2 rounded-lg shadow transition-colors flex items-center justify-center gap-2 cursor-pointer"
         >
           <UserPlus class="w-4 h-4" /> Nuevo Usuario
         </button>
@@ -258,8 +272,8 @@ const getRolBadge = (user: Usuario) => {
 
       <!-- Modal Crear Usuario -->
       <Teleport to="body">
-        <div v-if="modalAgregar" class="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
-          <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col border border-slate-200">
+        <div v-if="modalAgregar" class="fixed inset-0 bg-slate-900/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div class="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md max-h-[92vh] overflow-y-auto shadow-2xl flex flex-col border border-slate-200">
             <div class="p-6 border-b border-slate-100 flex justify-between items-center">
               <h3 class="font-black text-slate-800 text-xl">{{ modoEdicion ? 'Editar Usuario' : 'Crear Usuario Interno' }}</h3>
               <button @click="modalAgregar = false" class="text-slate-400 hover:text-slate-700 cursor-pointer text-xl font-bold">&times;</button>
@@ -286,6 +300,18 @@ const getRolBadge = (user: Usuario) => {
                     v-model="nuevoContrasena"
                     :placeholder="modoEdicion ? 'Nueva contraseña' : 'Asigna una clave temporal'"
                     :required="!modoEdicion"
+                    autocomplete="new-password"
+                  />
+                </div>
+
+                <div v-if="!modoEdicion || nuevoContrasena.trim().length > 0">
+                  <label class="block text-xs font-bold text-slate-500 uppercase mb-1">
+                    Confirmar contraseña
+                  </label>
+                  <CampoContrasena
+                    v-model="nuevoContrasenaConfirm"
+                    placeholder="Repite la contraseña"
+                    :required="!modoEdicion || nuevoContrasena.trim().length > 0"
                     autocomplete="new-password"
                   />
                 </div>

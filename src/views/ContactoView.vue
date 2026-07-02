@@ -44,7 +44,7 @@ const enviarFormulario = () => {
             ¿Encontraste la propiedad de tus sueños?
           </h1>
           <p class="text-lg text-slate-500 mb-8 leading-relaxed">
-            Completa el siguiente formulario con tus dudas o intención de reserva. Nuestra plataforma envía tu solicitud de manera instantánea a nuestros agentes.
+            Cuéntanos qué propiedad te interesa o qué dudas tienes. Un agente de UrbanSphere revisará tu mensaje y se pondrá en contacto contigo a la brevedad.
           </p>
           
           <div class="flex flex-col gap-6">
@@ -78,7 +78,7 @@ const enviarFormulario = () => {
               <Send class="w-10 h-10 text-white" />
             </div>
             <h3 class="text-3xl font-black mb-2">¡Solicitud Enviada!</h3>
-            <p class="text-blue-100 text-lg">Tu mensaje ha sido encolado exitosamente y será procesado a la brevedad por un agente disponible.</p>
+            <p class="text-blue-100 text-lg">Recibimos tu mensaje. Un agente se comunicará contigo pronto.</p>
           </div>
 
           <h2 class="text-2xl font-black text-slate-900 mb-6">Formulario de Reserva / Consulta</h2>
@@ -111,7 +111,7 @@ const enviarFormulario = () => {
 
             <button type="submit" :disabled="enviando" class="w-full bg-[#0f172a] text-white py-4 rounded-xl font-bold hover:bg-[#003399] transition-all shadow-md mt-2 flex items-center justify-center cursor-pointer disabled:opacity-70">
               <span v-if="enviando" class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-              <span v-else class="flex items-center gap-2"><Send class="w-5 h-5" /> Enviar Solicitud a Sistema</span>
+              <span v-else class="flex items-center gap-2"><Send class="w-5 h-5" /> Enviar Solicitud</span>
             </button>
           </form>
 

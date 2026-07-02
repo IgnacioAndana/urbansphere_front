@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { FileText, Users, LogOut, Home, Compass, Menu, X } from 'lucide-vue-next'
+import { FileText, Users, LogOut, Home, Compass, Menu, X, User } from 'lucide-vue-next'
 import imagotipoUrl from '../assets/UrbanSphere-Imagotipo.png'
 import { useSesion } from '../composables/useSesion'
 import { nombreRolPorId } from '../constants/roles'
@@ -86,6 +86,9 @@ const manejarCerrarSesion = async () => {
       </nav>
       
       <div class="p-4 border-t border-slate-200 flex flex-col gap-2">
+        <router-link to="/admin/perfil" class="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 rounded-lg font-medium text-sm transition-colors text-slate-600">
+          <User class="w-4 h-4" /> Mi perfil
+        </router-link>
         <router-link to="/" class="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 rounded-lg font-medium text-sm transition-colors text-slate-600">
           <Home class="w-4 h-4" /> Inicio
         </router-link>
@@ -115,7 +118,9 @@ const manejarCerrarSesion = async () => {
             <p class="font-black text-slate-800 text-sm leading-none mb-1">{{ usuarioActual.nombre }}</p>
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">{{ usuarioActual.rol }}</p>
           </div>
-          <div class="w-10 h-10 bg-gradient-to-tr from-[#003399] to-blue-400 text-white rounded-full flex items-center justify-center font-black text-sm shadow-md border-2 border-white">{{ usuarioActual.iniciales }}</div>
+          <router-link to="/admin/perfil" class="w-10 h-10 bg-gradient-to-tr from-[#003399] to-blue-400 text-white rounded-full flex items-center justify-center font-black text-sm shadow-md border-2 border-white hover:opacity-90 transition-opacity" title="Mi perfil">
+            {{ usuarioActual.iniciales }}
+          </router-link>
         </div>
       </header>
 

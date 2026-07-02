@@ -1,19 +1,22 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-vue-next'
+import { ref, onMounted, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { Mail, ArrowLeft } from 'lucide-vue-next'
+import CampoContrasena from '../components/CampoContrasena.vue'
 import { authService } from '../services/usuarios'
 import { obtenerMensajeErrorLogin } from '../utils/apiError'
-import { redirigirTrasLogin, rutaSiYaAutenticado } from '../utils/authRedirect'
+import { redirigirTrasLogin, rutaSiYaAutenticado, parseReturnTo } from '../utils/authRedirect'
 import isotipoUrl from '../assets/UrbanSphere-Isotipo.png'
 
 const router = useRouter()
+const route = useRoute()
 
 const email = ref('')
 const contrasena = ref('')
-const mostrarContrasena = ref(false)
 const cargando = ref(false)
 const errorMsg = ref('')
+
+const volverDestino = computed(() => parseReturnTo(route.query.returnTo) ?? '/')
 
 onMounted(() => {
   const destino = rutaSiYaAutenticado()
@@ -29,7 +32,7 @@ const manejarLogin = async () => {
       email: email.value,
       contrasena: contrasena.value,
     })
-    await redirigirTrasLogin(router)
+    await redirigirTrasLogin(router, route.query.returnTo)
   } catch (error) {
     errorMsg.value = obtenerMensajeErrorLogin(error)
   } finally {
@@ -59,8 +62,8 @@ const manejarLogin = async () => {
         
         <div class="flex flex-col items-center mb-4">
           <img :src="isotipoUrl" alt="UrbanSphere Isotipo" class="h-40 object-contain mb-2" />
-          <h2 class="text-3xl font-black text-slate-900">Bienvenido de vuelta</h2>
-          <p class="text-slate-500 mt-2 text-sm">Inicia sesión para acceder a tu cuenta y continuar.</p>
+          <h2 class="text-3xl font-black text-slate-900">Inicia sesión</h2>
+          <p class="text-slate-500 mt-2 text-sm">Accede a tu cuenta para continuar en UrbanSphere.</p>
         </div>
 
         <!-- Alerta de Error Dinámica -->
@@ -85,16 +88,12 @@ const manejarLogin = async () => {
           
           <div>
             <label class="block text-sm font-bold text-slate-900 mb-2">Contraseña</label>
-            <div class="relative">
-              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-                <Lock class="w-5 h-5" />
-              </span>
-              <input v-model="contrasena" :type="mostrarContrasena ? 'text' : 'password'" placeholder="Ingresa tu contraseña" class="w-full border border-slate-300 rounded-xl pl-10 pr-10 py-3 text-sm focus:outline-none focus:border-[#003399] transition-colors" required />
-              <button type="button" @click="mostrarContrasena = !mostrarContrasena" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none cursor-pointer">
-                <EyeOff v-if="mostrarContrasena" class="w-5 h-5" />
-                <Eye v-else class="w-5 h-5" />
-              </button>
-            </div>
+            <CampoContrasena
+              v-model="contrasena"
+              placeholder="Ingresa tu contraseña"
+              required
+              autocomplete="current-password"
+            />
           </div>
 
           <div class="flex justify-end text-sm">
@@ -110,8 +109,8 @@ const manejarLogin = async () => {
           <router-link to="/registro" class="text-sm font-bold text-slate-600 hover:text-[#003399] transition-colors">
             ¿No tienes cuenta? Regístrate aquí
           </router-link>
-          <router-link to="/" class="text-sm font-bold text-slate-400 hover:text-[#003399] transition-colors flex items-center justify-center gap-1">
-            <ArrowLeft class="w-4 h-4" /> Volver al Catálogo Público
+          <router-link :to="volverDestino" class="text-sm font-bold text-slate-400 hover:text-[#003399] transition-colors flex items-center justify-center gap-1">
+            <ArrowLeft class="w-4 h-4" /> Volver
           </router-link>
         </div>
 
