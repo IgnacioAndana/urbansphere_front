@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, nextTick, watch, computed } from 'vue'
-import { MapPin, Filter, Bed, Bath, Maximize, Heart, Home } from 'lucide-vue-next'
+import { MapPin, Filter, Bed, Bath, Maximize, Heart } from 'lucide-vue-next'
 import PublicLayout from '../layouts/PublicLayout.vue'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
-import type { Map } from 'leaflet'
 import isotipoUrl from '../assets/UrbanSphere-Isotipo.png'
 
 const mapContainer = ref<HTMLElement | null>(null)

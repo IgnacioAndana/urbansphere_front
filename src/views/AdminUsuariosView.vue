@@ -8,7 +8,6 @@ import { usuariosService, authService } from '../services/usuarios'
 import { useSesion } from '../composables/useSesion'
 import {
   ROLES,
-  nombreRolPorId,
   idsUsuarioCoinciden,
   NOMBRE_ROL_ES,
 } from '../constants/roles'

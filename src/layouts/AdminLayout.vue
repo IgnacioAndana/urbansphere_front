@@ -12,7 +12,7 @@ defineProps<{
 
 const router = useRouter()
 const route = useRoute()
-const { nombre, rolId, email, puedeVerUsuarios, cargarSesion, cerrarSesion } = useSesion()
+const { nombre, rolId, puedeVerUsuarios, cargarSesion, cerrarSesion } = useSesion()
 
 const nombreUsuario = ref('Administrador')
 const rolUsuario = ref('Admin')
