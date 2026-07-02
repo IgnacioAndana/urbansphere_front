@@ -109,4 +109,14 @@ router.beforeEach(async (to) => {
   }
 });
 
+router.afterEach((to) => {
+  if (to.name) {
+    const routeName = String(to.name);
+    const formattedName = routeName.charAt(0).toUpperCase() + routeName.slice(1).replace(/-/g, ' ');
+    document.title = `UrbanSphere - ${formattedName}`;
+  } else {
+    document.title = 'UrbanSphere';
+  }
+});
+
 export default router;

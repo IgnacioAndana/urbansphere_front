@@ -11,7 +11,9 @@ const router = useRouter();
 const nombre = ref('');
 const email = ref('');
 const contrasena = ref('');
+const confirmarContrasena = ref('');
 const mostrarContrasena = ref(false);
+const mostrarConfirmarContrasena = ref(false);
 
 const cargando = ref(false);
 const errorMsg = ref('');
@@ -23,6 +25,12 @@ const manejarRegistro = async () => {
   exitoMsg.value = '';
   
   try {
+    if (contrasena.value !== confirmarContrasena.value) {
+      errorMsg.value = 'Las contraseñas no coinciden.';
+      cargando.value = false;
+      return;
+    }
+
     const data: RegistrarUsuarioDto = {
       nombre: nombre.value,
       email: email.value,
@@ -98,6 +106,17 @@ const manejarRegistro = async () => {
               <input v-model="contrasena" :type="mostrarContrasena ? 'text' : 'password'" placeholder="Crea una contraseña segura" class="w-full border border-slate-300 rounded-xl px-4 pr-10 py-2.5 text-sm focus:outline-none focus:border-[#003399] transition-colors" required />
               <button type="button" @click="mostrarContrasena = !mostrarContrasena" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none cursor-pointer">
                 <EyeOff v-if="mostrarContrasena" class="w-5 h-5" />
+                <Eye v-else class="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-bold text-slate-900 mb-1">Confirmar contraseña</label>
+            <div class="relative">
+              <input v-model="confirmarContrasena" :type="mostrarConfirmarContrasena ? 'text' : 'password'" placeholder="Repite la contraseña" class="w-full border border-slate-300 rounded-xl px-4 pr-10 py-2.5 text-sm focus:outline-none focus:border-[#003399] transition-colors" required />
+              <button type="button" @click="mostrarConfirmarContrasena = !mostrarConfirmarContrasena" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none cursor-pointer">
+                <EyeOff v-if="mostrarConfirmarContrasena" class="w-5 h-5" />
                 <Eye v-else class="w-5 h-5" />
               </button>
             </div>

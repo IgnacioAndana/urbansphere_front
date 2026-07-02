@@ -9,7 +9,6 @@ const formularioEnviado = ref(false);
 const form = ref({
   nombre: '',
   email: '',
-  propiedad: '',
   mensaje: ''
 });
 
@@ -27,7 +26,7 @@ const enviarFormulario = () => {
     // Limpiar formulario tras unos segundos
     setTimeout(() => {
       formularioEnviado.value = false;
-      form.value = { nombre: '', email: '', propiedad: '', mensaje: '' };
+      form.value = { nombre: '', email: '', mensaje: '' };
     }, 4000);
   }, 1500);
 };
@@ -45,7 +44,7 @@ const enviarFormulario = () => {
             ¿Encontraste la propiedad de tus sueños?
           </h1>
           <p class="text-lg text-slate-500 mb-8 leading-relaxed">
-            Completa el siguiente formulario con tus dudas o intención de reserva. Nuestra plataforma envía tu solicitud de manera instantánea a nuestros agentes a través de colas de alta velocidad (RabbitMQ) para garantizar que nadie te gane la oportunidad.
+            Completa el siguiente formulario con tus dudas o intención de reserva. Nuestra plataforma envía tu solicitud de manera instantánea a nuestros agentes.
           </p>
           
           <div class="flex flex-col gap-6">
@@ -101,13 +100,6 @@ const enviarFormulario = () => {
               </div>
             </div>
 
-            <div>
-              <label class="block text-sm font-bold text-slate-700 mb-1">ID o Título de la Propiedad (Opcional)</label>
-              <div class="relative">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><MapPin class="w-5 h-5" /></span>
-                <input v-model="form.propiedad" type="text" placeholder="Ej: Depto Ñuñoa 2D2B" class="w-full border border-slate-300 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#003399] transition-colors" />
-              </div>
-            </div>
 
             <div>
               <label class="block text-sm font-bold text-slate-700 mb-1">Mensaje de consulta o reserva</label>
