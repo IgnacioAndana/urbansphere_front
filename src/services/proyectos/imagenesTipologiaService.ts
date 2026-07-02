@@ -1,12 +1,23 @@
+import axios from 'axios'
 import api from '../api'
 import type { TipologiaImagen } from '../../types/proyectos'
 
+/** El MS a veces responde 404 cuando aún no hay imágenes; eso es una galería vacía, no un error. */
+function esGaleriaVacia(error: unknown): boolean {
+  return axios.isAxiosError(error) && error.response?.status === 404
+}
+
 export const imagenesTipologiaService = {
   async listar(proyectoId: number, tipologiaId: number): Promise<TipologiaImagen[]> {
-    const { data } = await api.get<TipologiaImagen[]>(
-      `/proyectos/${proyectoId}/tipologias/${tipologiaId}/imagenes`,
-    )
-    return data
+    try {
+      const { data } = await api.get<TipologiaImagen[]>(
+        `/proyectos/${proyectoId}/tipologias/${tipologiaId}/imagenes`,
+      )
+      return Array.isArray(data) ? data : []
+    } catch (error) {
+      if (esGaleriaVacia(error)) return []
+      throw error
+    }
   },
 
   async subirArchivo(

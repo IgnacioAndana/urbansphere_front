@@ -1,10 +1,20 @@
+import axios from 'axios'
 import api from '../api'
 import type { CrearProyectoImagenDto, ProyectoImagen } from '../../types/proyectos'
 
+function esGaleriaVacia(error: unknown): boolean {
+  return axios.isAxiosError(error) && error.response?.status === 404
+}
+
 export const imagenesProyectoService = {
   async listar(proyectoId: number): Promise<ProyectoImagen[]> {
-    const { data } = await api.get<ProyectoImagen[]>(`/proyectos/${proyectoId}/imagenes`)
-    return data
+    try {
+      const { data } = await api.get<ProyectoImagen[]>(`/proyectos/${proyectoId}/imagenes`)
+      return Array.isArray(data) ? data : []
+    } catch (error) {
+      if (esGaleriaVacia(error)) return []
+      throw error
+    }
   },
 
   async crearPorUrl(proyectoId: number, dto: CrearProyectoImagenDto): Promise<ProyectoImagen> {

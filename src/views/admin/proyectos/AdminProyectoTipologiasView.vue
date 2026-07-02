@@ -38,6 +38,7 @@ const tipologiaImagenes = ref<Tipologia | null>(null)
 const imagenes = ref<TipologiaImagen[]>([])
 const cargandoImagenes = ref(false)
 const subiendoImagen = ref(false)
+const errorImagenesModal = ref('')
 
 onMounted(async () => {
   if (route.query.creado === '1') {
@@ -123,14 +124,21 @@ async function confirmarEliminar() {
 async function abrirImagenes(t: Tipologia) {
   tipologiaImagenes.value = t
   modalImagenes.value = true
+  errorImagenesModal.value = ''
+  imagenes.value = []
   cargandoImagenes.value = true
   try {
     imagenes.value = await imagenesTipologiaService.listar(proyectoId.value, t.id)
   } catch (error) {
-    errorMsg.value = obtenerMensajeError(error, 'No se pudieron cargar las imágenes.')
+    errorImagenesModal.value = obtenerMensajeError(error, 'No se pudieron cargar las imágenes.')
   } finally {
     cargandoImagenes.value = false
   }
+}
+
+function cerrarModalImagenes() {
+  modalImagenes.value = false
+  errorImagenesModal.value = ''
 }
 
 async function subirImagenTipologia(event: Event) {
@@ -139,6 +147,7 @@ async function subirImagenTipologia(event: Event) {
   const t = tipologiaImagenes.value
   if (!file || !t) return
   subiendoImagen.value = true
+  errorImagenesModal.value = ''
   try {
     await imagenesTipologiaService.subirArchivo(proyectoId.value, t.id, file, {
       esPortada: imagenes.value.length === 0,
@@ -146,7 +155,7 @@ async function subirImagenTipologia(event: Event) {
     imagenes.value = await imagenesTipologiaService.listar(proyectoId.value, t.id)
     input.value = ''
   } catch (error) {
-    errorMsg.value = obtenerMensajeError(error, 'Error al subir imagen.')
+    errorImagenesModal.value = obtenerMensajeError(error, 'Error al subir imagen.')
   } finally {
     subiendoImagen.value = false
   }
@@ -155,11 +164,12 @@ async function subirImagenTipologia(event: Event) {
 async function eliminarImagen(imagenId: number) {
   const t = tipologiaImagenes.value
   if (!t) return
+  errorImagenesModal.value = ''
   try {
     await imagenesTipologiaService.eliminar(proyectoId.value, t.id, imagenId)
     imagenes.value = await imagenesTipologiaService.listar(proyectoId.value, t.id)
   } catch (error) {
-    errorMsg.value = obtenerMensajeError(error, 'No se pudo eliminar la imagen.')
+    errorImagenesModal.value = obtenerMensajeError(error, 'No se pudo eliminar la imagen.')
   }
 }
 </script>
@@ -286,7 +296,10 @@ async function eliminarImagen(imagenId: number) {
         <div class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 shadow-2xl">
           <div class="flex justify-between items-start mb-4">
             <h3 class="font-black text-lg">Imágenes — {{ tipologiaImagenes.codigoTipologia }}</h3>
-            <button type="button" class="text-slate-400 hover:text-slate-700" @click="modalImagenes = false"><X class="w-5 h-5" /></button>
+            <button type="button" class="text-slate-400 hover:text-slate-700" @click="cerrarModalImagenes"><X class="w-5 h-5" /></button>
+          </div>
+          <div v-if="errorImagenesModal" class="mb-3 text-sm text-red-700 bg-red-50 border border-red-200 p-3 rounded-xl">
+            {{ errorImagenesModal }}
           </div>
           <label class="block w-full border-2 border-dashed border-slate-200 rounded-xl p-4 text-center text-sm text-slate-500 cursor-pointer hover:border-[#003399] mb-4">
             <input type="file" accept="image/*" class="hidden" :disabled="subiendoImagen" @change="subirImagenTipologia" />
