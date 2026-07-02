@@ -184,6 +184,10 @@ const getRolBadge = (user: Usuario) => {
   if (numId === ROLES.AGENT) return { text: 'Agente Inmobiliario', class: 'bg-blue-100 text-blue-700' };
   return { text: 'Usuario Básico', class: 'bg-slate-100 text-slate-700' };
 };
+
+const usuariosOrdenados = computed(() =>
+  [...usuarios.value].sort((a, b) => Number(a.id) - Number(b.id)),
+)
 </script>
 
 <template>
@@ -215,7 +219,7 @@ const getRolBadge = (user: Usuario) => {
           <table class="w-full text-left border-collapse">
             <thead>
               <tr class="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider font-bold text-slate-500">
-                <th class="p-4">ID</th>
+                <th class="p-4 w-14">N°</th>
                 <th class="p-4">Nombre</th>
                 <th class="p-4">Email</th>
                 <th class="p-4">Rol</th>
@@ -227,17 +231,17 @@ const getRolBadge = (user: Usuario) => {
               <tr v-if="cargando">
                 <td :colspan="puedeCrearEliminarUsuarios ? 6 : 5" class="p-8 text-center text-slate-400 font-medium">Cargando usuarios...</td>
               </tr>
-              <tr v-else-if="usuarios.length === 0">
+              <tr v-else-if="usuariosOrdenados.length === 0">
                 <td :colspan="puedeCrearEliminarUsuarios ? 6 : 5" class="p-8 text-center text-slate-400 font-medium">No se encontraron usuarios.</td>
               </tr>
               <tr
                 v-else
-                v-for="user in usuarios"
+                v-for="(user, index) in usuariosOrdenados"
                 :key="user.id"
                 class="hover:bg-slate-50 transition-colors"
                 :class="esMiCuenta(user) ? 'bg-[#003399]/5' : ''"
               >
-                <td class="p-4 text-slate-500 font-mono text-xs">#{{ user.id }}</td>
+                <td class="p-4 text-slate-500 font-semibold text-xs tabular-nums">{{ index + 1 }}</td>
                 <td class="p-4 font-bold text-slate-800">
                   {{ user.nombre }}
                   <span v-if="esMiCuenta(user)" class="ml-1 text-[10px] font-bold uppercase text-[#003399]">(Tú)</span>
