@@ -48,7 +48,45 @@ const routes: Array<RouteRecordRaw> = [
     path: '/admin/proyectos',
     name: 'admin-proyectos',
     meta: { requiresAdmin: true },
-    component: () => import('../views/AdminProyectosView.vue'),
+    component: () => import('../views/admin/proyectos/AdminProyectosListView.vue'),
+  },
+  {
+    path: '/admin/proyectos/nuevo',
+    name: 'admin-proyecto-nuevo',
+    meta: { requiresAdmin: true },
+    component: () => import('../views/admin/proyectos/AdminProyectoNuevoView.vue'),
+  },
+  {
+    path: '/admin/proyectos/:proyectoId',
+    meta: { requiresAdmin: true },
+    component: () => import('../views/admin/proyectos/AdminProyectoLayoutView.vue'),
+    props: true,
+    children: [
+      {
+        path: '',
+        redirect: (to) => ({ name: 'admin-proyecto-editar', params: { proyectoId: to.params.proyectoId } }),
+      },
+      {
+        path: 'editar',
+        name: 'admin-proyecto-editar',
+        component: () => import('../views/admin/proyectos/AdminProyectoEditarView.vue'),
+      },
+      {
+        path: 'tipologias',
+        name: 'admin-proyecto-tipologias',
+        component: () => import('../views/admin/proyectos/AdminProyectoTipologiasView.vue'),
+      },
+      {
+        path: 'imagenes',
+        name: 'admin-proyecto-imagenes',
+        component: () => import('../views/admin/proyectos/AdminProyectoImagenesView.vue'),
+      },
+      {
+        path: 'equipamiento',
+        name: 'admin-proyecto-equipamiento',
+        component: () => import('../views/admin/proyectos/AdminProyectoEquipamientoView.vue'),
+      },
+    ],
   },
   {
     path: '/admin/usuarios',
@@ -80,7 +118,7 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/admin/nuevo-proyecto',
-    redirect: '/admin/proyectos'
+    redirect: '/admin/proyectos/nuevo'
   },
   {
     path: '/:pathMatch(.*)*',

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Building2, Users, LogOut, Home, LayoutGrid, Menu, X, User } from 'lucide-vue-next'
+import { Building2, Users, LogOut, Home, LayoutGrid, Menu, X, User, ChevronDown, List, FolderPlus } from 'lucide-vue-next'
 import imagotipoUrl from '../assets/UrbanSphere-Imagotipo.png'
 import { useSesion } from '../composables/useSesion'
 import { nombreRolPorId } from '../constants/roles'
@@ -18,6 +18,9 @@ const nombreUsuario = ref('Administrador')
 const rolUsuario = ref('Admin')
 const cerrando = ref(false)
 const menuAbierto = ref(false)
+const proyectosAbierto = ref(false)
+
+const esRutaProyectos = computed(() => route.path.startsWith('/admin/proyectos'))
 
 const iniciales = computed(() => {
   const partes = nombreUsuario.value.trim().split(/\s+/)
@@ -34,12 +37,14 @@ const usuarioActual = computed(() => ({
 onMounted(async () => {
   await cargarSesion()
   sincronizarNombre()
+  proyectosAbierto.value = esRutaProyectos.value
 })
 
 watch(
   () => route.path,
   () => {
     menuAbierto.value = false
+    if (esRutaProyectos.value) proyectosAbierto.value = true
   },
 )
 
@@ -64,7 +69,6 @@ const manejarCerrarSesion = async () => {
 <template>
   <div class="flex h-screen bg-slate-50 overflow-hidden relative">
     
-    <!-- Overlay responsivo -->
     <div v-if="menuAbierto" class="fixed inset-0 bg-slate-900/50 z-20 md:hidden" @click="menuAbierto = false"></div>
 
     <aside :class="['w-64 bg-white text-slate-700 flex flex-col shadow-xl z-30 transition-transform absolute md:relative h-full', menuAbierto ? 'translate-x-0' : '-translate-x-full md:translate-x-0']">
@@ -76,16 +80,44 @@ const manejarCerrarSesion = async () => {
       </div>
       
       <div class="p-4 uppercase text-[10px] font-bold text-slate-400 tracking-wider">Menú Principal</div>
-      <nav class="flex-1 px-4 flex flex-col gap-1 mt-2">
-        <router-link to="/admin/proyectos" class="flex items-center gap-3 px-3 py-3 hover:bg-slate-50 rounded-lg font-medium text-sm transition-colors text-slate-600" active-class="bg-[#003399]/10 text-[#003399] font-bold hover:bg-[#003399]/10">
-          <Building2 class="w-4 h-4" /> Proyectos
-        </router-link>
+      <nav class="flex-1 px-4 flex flex-col gap-1 mt-2 overflow-y-auto">
+        <!-- Proyectos (desplegable) -->
+        <div>
+          <button
+            type="button"
+            class="w-full flex items-center justify-between gap-3 px-3 py-3 hover:bg-slate-50 rounded-lg font-medium text-sm transition-colors text-slate-600"
+            :class="esRutaProyectos ? 'bg-[#003399]/10 text-[#003399] font-bold' : ''"
+            @click="proyectosAbierto = !proyectosAbierto"
+          >
+            <span class="flex items-center gap-3">
+              <Building2 class="w-4 h-4" /> Proyectos
+            </span>
+            <ChevronDown class="w-4 h-4 transition-transform" :class="proyectosAbierto ? 'rotate-180' : ''" />
+          </button>
+          <div v-show="proyectosAbierto" class="ml-4 mt-1 flex flex-col gap-0.5 border-l-2 border-slate-100 pl-3">
+            <router-link
+              to="/admin/proyectos"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+              active-class="!text-[#003399] !bg-[#003399]/10 !font-bold"
+            >
+              <List class="w-3.5 h-3.5" /> Listado
+            </router-link>
+            <router-link
+              to="/admin/proyectos/nuevo"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+              active-class="!text-[#003399] !bg-[#003399]/10 !font-bold"
+            >
+              <FolderPlus class="w-3.5 h-3.5" /> Nuevo proyecto
+            </router-link>
+          </div>
+        </div>
+
         <router-link v-if="puedeVerUsuarios" to="/admin/usuarios" class="flex items-center gap-3 px-3 py-3 hover:bg-slate-50 rounded-lg font-medium text-sm transition-colors text-slate-600" active-class="bg-[#003399]/10 text-[#003399] font-bold hover:bg-[#003399]/10">
           <Users class="w-4 h-4" /> Usuarios
         </router-link>
       </nav>
       
-      <div class="p-4 border-t border-slate-200 flex flex-col gap-2">
+      <div class="p-4 border-t border-slate-200 flex flex-col gap-2 shrink-0">
         <router-link to="/admin/perfil" class="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 rounded-lg font-medium text-sm transition-colors text-slate-600">
           <User class="w-4 h-4" /> Mi perfil
         </router-link>

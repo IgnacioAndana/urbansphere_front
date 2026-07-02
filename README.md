@@ -92,6 +92,7 @@ VITE_API_BASE_URL=http://13.222.88.101/api
 | Variable | Descripción |
 |----------|-------------|
 | `VITE_API_BASE_URL` | URL del backend. Todas las peticiones (login, usuarios, etc.) se hacen contra esta base + la ruta del servicio. **Debe terminar en `/api`.** |
+| `VITE_GEMINI_API_KEY` | *(Opcional)* API Key de [Google AI Studio](https://aistudio.google.com/apikey) para redactar descripciones de proyectos con Gemini en el panel admin. Sin ella, el formulario usa un generador de texto demo. |
 
 **Valores habituales:**
 

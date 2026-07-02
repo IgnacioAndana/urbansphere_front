@@ -5,6 +5,7 @@
 #   EC2_USER          — usuario SSH (ej. ubuntu o root)
 #   EC2_SSH_KEY       — clave privada SSH (PEM)
 #   VITE_API_BASE_URL — URL del BFF en prod (ej. http://13.222.88.101/api)
+#   VITE_GEMINI_API_KEY — (opcional) API Key Gemini para redactar descripciones en admin
 
 name: Deploy FRONTEND (prod)
 
@@ -34,6 +35,7 @@ jobs:
       - name: Build
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
         run: npm run build
 
       - name: Pack dist
