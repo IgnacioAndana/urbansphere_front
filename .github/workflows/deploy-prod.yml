@@ -1,4 +1,12 @@
-name: Deploy BFF (prod)
+# Build en GitHub Actions → copia dist/ a /var/www/html en EC2 (nginx).
+#
+# Secrets requeridos en el repo:
+#   EC2_HOST          — IP o dominio (ej. 13.222.88.101)
+#   EC2_USER          — usuario SSH (ej. ubuntu o root)
+#   EC2_SSH_KEY       — clave privada SSH (PEM)
+#   VITE_API_BASE_URL — URL del BFF en prod (ej. http://13.222.88.101/api)
+
+name: Deploy FRONTEND (prod)
 
 on:
   push:
@@ -11,7 +19,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to EC2
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+        run: npm run build
+
+      - name: Pack dist
+        run: tar -czf dist.tar.gz -C dist .
+
+      - name: Upload build to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          source: dist.tar.gz
+          target: /tmp
+
+      - name: Publish to /var/www/html
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -20,14 +58,9 @@ jobs:
           port: 22
           script: |
             set -e
-            cd /home/bff
-
-            git fetch origin main
-            git reset --hard origin/main
-
-            export HUSKY=0
-            npm ci
-            npm run build
-
-            pm2 restart 2
-            pm2 save
+            sudo rm -rf /var/www/html/*
+            sudo tar -xzf /tmp/dist.tar.gz -C /var/www/html
+            sudo chown -R www-data:www-data /var/www/html 2>/dev/null || sudo chown -R nginx:nginx /var/www/html
+            rm -f /tmp/dist.tar.gz
+            echo "Deploy OK:"
+            ls -la /var/www/html
