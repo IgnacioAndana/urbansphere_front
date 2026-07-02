@@ -77,7 +77,7 @@ const manejarCerrarSesion = async () => {
       
       <div class="p-4 uppercase text-[10px] font-bold text-slate-400 tracking-wider">Menú Principal</div>
       <nav class="flex-1 px-4 flex flex-col gap-1 mt-2">
-        <router-link to="/admin/nuevo-proyecto" class="flex items-center gap-3 px-3 py-3 hover:bg-slate-50 rounded-lg font-medium text-sm transition-colors text-slate-600" active-class="bg-[#003399]/10 text-[#003399] font-bold hover:bg-[#003399]/10">
+        <router-link to="/admin/proyectos" class="flex items-center gap-3 px-3 py-3 hover:bg-slate-50 rounded-lg font-medium text-sm transition-colors text-slate-600" active-class="bg-[#003399]/10 text-[#003399] font-bold hover:bg-[#003399]/10">
           <FileText class="w-4 h-4" /> Proyectos
         </router-link>
         <router-link v-if="puedeVerUsuarios" to="/admin/usuarios" class="flex items-center gap-3 px-3 py-3 hover:bg-slate-50 rounded-lg font-medium text-sm transition-colors text-slate-600" active-class="bg-[#003399]/10 text-[#003399] font-bold hover:bg-[#003399]/10">

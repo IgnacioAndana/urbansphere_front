@@ -52,7 +52,13 @@ api.interceptors.response.use(
       const rutasPublicas = ['/login', '/olvide-contrasena', '/restablecer-contrasena']
       const enRutaPublica = rutasPublicas.some((r) => window.location.pathname.startsWith(r))
 
-      if (teniaSesion && !enRutaPublica) {
+      const requestUrl = error.config?.url || ''
+      
+      // Si el 401 viene de MS_PROYECTOS, es posible que haya un desajuste de JWT_SECRET localmente.
+      // No deslogueamos forzosamente para permitir ver el error en la vista.
+      const esDeProyectos = requestUrl.startsWith('/proyectos')
+
+      if (teniaSesion && !enRutaPublica && !esDeProyectos) {
         localStorage.removeItem(STORAGE_KEYS.tokenAcceso)
         localStorage.removeItem(STORAGE_KEYS.tokenRefresco)
         localStorage.removeItem(STORAGE_KEYS.usuario)

@@ -45,10 +45,10 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/DetalleView.vue'),
   },
   {
-    path: '/admin/nuevo-proyecto',
-    name: 'admin-form',
+    path: '/admin/proyectos',
+    name: 'admin-proyectos',
     meta: { requiresAdmin: true },
-    component: () => import('../views/AdminFormView.vue'),
+    component: () => import('../views/AdminProyectosView.vue'),
   },
   {
     path: '/admin/usuarios',
