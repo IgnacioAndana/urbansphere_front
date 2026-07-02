@@ -67,6 +67,19 @@ const routes: Array<RouteRecordRaw> = [
     name: 'user-reservas',
     component: () => import('../views/UserReservasView.vue'), // Panel del usuario
     meta: { requiresAuth: true } // Adaptado al logic de HEAD o simplemente requiere auth
+  },
+  {
+    path: '/admin',
+    redirect: '/admin/proyectos'
+  },
+  {
+    path: '/admin/nuevo-proyecto',
+    redirect: '/admin/proyectos'
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    redirect: '/'
   }
 ];
 
@@ -103,7 +116,7 @@ router.beforeEach(async (to) => {
       }
 
       if (to.meta.requiresUserList && !puedeListarUsuarios(rolId)) {
-        return { name: 'admin-form' };
+        return { name: 'admin-proyectos' };
       }
     }
   }
