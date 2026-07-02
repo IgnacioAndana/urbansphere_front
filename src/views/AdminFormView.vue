@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { MapPin, Sparkles, CloudUpload, Image as ImageIcon, Save, Plus, Trash2 } from 'lucide-vue-next';
+import { MapPin, Sparkles, Image as Save, Plus, Trash2 } from 'lucide-vue-next';
 import AdminLayout from '../layouts/AdminLayout.vue';
 import { proyectosService, tipologiasService } from '../services/proyectos';
 import type { CrearProyectoDto, CrearTipologiaDto } from '../types/proyectos';
