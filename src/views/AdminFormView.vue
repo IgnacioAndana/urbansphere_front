@@ -1,13 +1,52 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { MapPin, Sparkles, CloudUpload, Image as ImageIcon, Save } from 'lucide-vue-next';
+import { useRouter } from 'vue-router';
+import { MapPin, Sparkles, CloudUpload, Image as ImageIcon, Save, Plus, Trash2 } from 'lucide-vue-next';
 import AdminLayout from '../layouts/AdminLayout.vue';
+import { proyectosService, tipologiasService } from '../services/proyectos';
+import type { CrearProyectoDto, CrearTipologiaDto } from '../types/proyectos';
 
+const router = useRouter();
+
+// Proyecto
 const titulo = ref('');
 const direccion = ref('');
-const precio = ref('');
+const comuna = ref('');
+const fechaEntregaEstimada = ref('');
+const estado = ref('activo');
+const latitud = ref(-33.4489);
+const longitud = ref(-70.6693);
 const descripcionIa = ref('');
+
+// Estado de UI
 const generandoIa = ref(false);
+const guardando = ref(false);
+const errorMsg = ref('');
+
+// Tipologías
+const tipologias = ref<CrearTipologiaDto[]>([
+  {
+    codigoTipologia: '',
+    dormitorios: 1,
+    banos: 1,
+    superficieM2: 30,
+    valorEnUf: 2000
+  }
+]);
+
+const agregarTipologia = () => {
+  tipologias.value.push({
+    codigoTipologia: '',
+    dormitorios: 1,
+    banos: 1,
+    superficieM2: 30,
+    valorEnUf: 2000
+  });
+};
+
+const eliminarTipologia = (index: number) => {
+  tipologias.value.splice(index, 1);
+};
 
 const llamarGemini = () => {
   if (!titulo.value) {
@@ -20,6 +59,41 @@ const llamarGemini = () => {
     generandoIa.value = false;
   }, 1500);
 };
+
+const guardarProyecto = async () => {
+  guardando.value = true;
+  errorMsg.value = '';
+
+  try {
+    const proyectoData: CrearProyectoDto = {
+      titulo: titulo.value,
+      direccion: direccion.value,
+      comuna: comuna.value,
+      fechaEntregaEstimada: fechaEntregaEstimada.value || undefined,
+      latitud: latitud.value,
+      longitud: longitud.value,
+      descripcion: descripcionIa.value,
+      estado: estado.value
+    };
+
+    // Crear Proyecto
+    const nuevoProyecto = await proyectosService.crear(proyectoData);
+
+    // Crear Tipologías
+    for (const t of tipologias.value) {
+      if (t.codigoTipologia && t.superficieM2 > 0 && t.valorEnUf > 0) {
+        await tipologiasService.crear(nuevoProyecto.id, t);
+      }
+    }
+
+    // Redirigir al catálogo
+    router.push('/catalogo');
+  } catch (error: any) {
+    errorMsg.value = error.response?.data?.message || 'Error al guardar el proyecto.';
+  } finally {
+    guardando.value = false;
+  }
+};
 </script>
 
 <template>
@@ -31,116 +105,150 @@ const llamarGemini = () => {
         <p class="text-slate-500 text-sm mt-1">Completa la información del proyecto para publicarlo en el catálogo comercial.</p>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        <div class="lg:col-span-7 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col gap-4">
-          <div class="flex items-center gap-2 text-sm font-bold text-slate-800">
-            <span class="w-6 h-6 rounded-full bg-[#003399] text-white flex items-center justify-center text-xs">1</span>
-            Información General
-          </div>
-          
-          <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Título del proyecto *</label>
-            <input v-model="titulo" type="text" placeholder="Ej: Edificio Vista Parque" class="w-full border border-slate-200 bg-slate-50/50 rounded-xl p-3 text-sm focus:outline-none focus:border-[#003399] focus:bg-white transition-colors" />
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Dirección completa *</label>
-            <input v-model="direccion" type="text" placeholder="Ej: Av. Providencia 1234, Providencia, Santiago" class="w-full border border-slate-200 bg-slate-50/50 rounded-xl p-3 text-sm focus:outline-none focus:border-[#003399] focus:bg-white transition-colors" />
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Precio (CLP) *</label>
-            <div class="flex shadow-sm rounded-xl overflow-hidden">
-              <span class="bg-slate-100 border border-r-0 border-slate-200 px-4 flex items-center text-xs font-bold text-slate-500">CLP</span>
-              <input v-model="precio" type="number" placeholder="Ej: 250000000" class="w-full border border-slate-200 bg-slate-50/50 p-3 text-sm focus:outline-none focus:border-[#003399] focus:bg-white transition-colors" />
-            </div>
-          </div>
-        </div>
-
-        <div class="lg:col-span-5 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col gap-4">
-          <div class="flex items-center gap-2 text-sm font-bold text-slate-800">
-            <span class="w-6 h-6 rounded-full bg-[#003399] text-white flex items-center justify-center text-xs">2</span>
-            Geolocalización
-          </div>
-          
-          <div class="flex-1 bg-slate-100 rounded-xl border border-slate-200 min-h-[140px] flex flex-col items-center justify-center text-center p-4 relative overflow-hidden">
-            <MapPin class="w-8 h-8 text-red-500 z-10" />
-            <p class="text-[11px] text-slate-500 font-semibold mt-1 z-10">Mapa Base de Carga</p>
-            <span class="text-[9px] text-slate-400 z-10">Arrastra el marcador para precisar</span>
-            <div class="absolute inset-0 opacity-25 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:12px_12px]"></div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Latitud</label>
-              <input type="text" value="-33.4489" disabled class="w-full border border-slate-200 bg-slate-100 rounded-lg p-2 text-xs text-slate-500 font-mono" />
-            </div>
-            <div>
-              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Longitud</label>
-              <input type="text" value="-70.6693" disabled class="w-full border border-slate-200 bg-slate-100 rounded-lg p-2 text-xs text-slate-500 font-mono" />
-            </div>
-          </div>
-        </div>
-
+      <div v-if="errorMsg" class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-sm font-semibold">
+        ⚠️ {{ errorMsg }}
       </div>
 
-      <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col gap-4">
-        <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-          <div class="flex items-center gap-2 text-sm font-bold text-slate-800">
-            <span class="w-6 h-6 rounded-full bg-[#003399] text-white flex items-center justify-center text-xs">3</span>
-            Contenido Inteligente
+      <form @submit.prevent="guardarProyecto" class="flex flex-col gap-6">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-7 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col gap-4">
+            <div class="flex items-center gap-2 text-sm font-bold text-slate-800">
+              <span class="w-6 h-6 rounded-full bg-[#003399] text-white flex items-center justify-center text-xs">1</span>
+              Información General
+            </div>
+            
+            <div>
+              <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Título del proyecto *</label>
+              <input v-model="titulo" type="text" placeholder="Ej: Edificio Vista Parque" required class="w-full border border-slate-200 bg-slate-50/50 rounded-xl p-3 text-sm focus:outline-none focus:border-[#003399] focus:bg-white transition-colors" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Dirección completa *</label>
+              <input v-model="direccion" type="text" placeholder="Ej: Av. Providencia 1234" required class="w-full border border-slate-200 bg-slate-50/50 rounded-xl p-3 text-sm focus:outline-none focus:border-[#003399] focus:bg-white transition-colors" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Comuna *</label>
+                <input v-model="comuna" type="text" placeholder="Ej: Providencia" required class="w-full border border-slate-200 bg-slate-50/50 rounded-xl p-3 text-sm focus:outline-none focus:border-[#003399] focus:bg-white transition-colors" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha Entrega</label>
+                <input v-model="fechaEntregaEstimada" type="date" class="w-full border border-slate-200 bg-slate-50/50 rounded-xl p-3 text-sm focus:outline-none focus:border-[#003399] focus:bg-white transition-colors text-slate-600" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Estado</label>
+              <select v-model="estado" class="w-full border border-slate-200 bg-slate-50/50 rounded-xl p-3 text-sm focus:outline-none focus:border-[#003399] focus:bg-white transition-colors">
+                <option value="borrador">Borrador</option>
+                <option value="activo">Activo</option>
+                <option value="inactivo">Inactivo</option>
+                <option value="archivado">Archivado</option>
+              </select>
+            </div>
           </div>
-          <button @click="llamarGemini" :disabled="generandoIa" class="bg-white border border-slate-200 hover:border-blue-300 text-slate-700 hover:text-[#003399] text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-sm disabled:opacity-50 cursor-pointer">
-            <Sparkles class="w-4 h-4 text-amber-400" /> {{ generandoIa ? 'Redactando...' : 'Generar descripción comercial con Gemini IA' }}
+
+          <div class="lg:col-span-5 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col gap-4">
+            <div class="flex items-center gap-2 text-sm font-bold text-slate-800">
+              <span class="w-6 h-6 rounded-full bg-[#003399] text-white flex items-center justify-center text-xs">2</span>
+              Geolocalización
+            </div>
+            
+            <div class="flex-1 bg-slate-100 rounded-xl border border-slate-200 min-h-[140px] flex flex-col items-center justify-center text-center p-4 relative overflow-hidden">
+              <MapPin class="w-8 h-8 text-red-500 z-10" />
+              <p class="text-[11px] text-slate-500 font-semibold mt-1 z-10">Mapa Base de Carga</p>
+              <span class="text-[9px] text-slate-400 z-10">Arrastra el marcador para precisar</span>
+              <div class="absolute inset-0 opacity-25 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:12px_12px]"></div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Latitud</label>
+                <input v-model.number="latitud" type="number" step="any" required class="w-full border border-slate-200 bg-white focus:border-[#003399] focus:outline-none rounded-lg p-2 text-xs text-slate-600 font-mono" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Longitud</label>
+                <input v-model.number="longitud" type="number" step="any" required class="w-full border border-slate-200 bg-white focus:border-[#003399] focus:outline-none rounded-lg p-2 text-xs text-slate-600 font-mono" />
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col gap-4">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2 text-sm font-bold text-slate-800">
+              <span class="w-6 h-6 rounded-full bg-[#003399] text-white flex items-center justify-center text-xs">3</span>
+              Contenido Inteligente
+            </div>
+            <button type="button" @click="llamarGemini" :disabled="generandoIa" class="bg-white border border-slate-200 hover:border-blue-300 text-slate-700 hover:text-[#003399] text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-sm disabled:opacity-50 cursor-pointer">
+              <Sparkles class="w-4 h-4 text-amber-400" /> {{ generandoIa ? 'Redactando...' : 'Generar descripción comercial' }}
+            </button>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Descripción de la propiedad *</label>
+            <textarea v-model="descripcionIa" rows="4" required placeholder="Describe las características, beneficios y entorno del proyecto..." class="w-full border border-slate-200 bg-slate-50/50 rounded-xl p-4 text-sm focus:outline-none focus:border-[#003399] focus:bg-white transition-colors resize-none leading-relaxed"></textarea>
+          </div>
+        </div>
+
+        <!-- Tipologías -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col gap-4">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2 text-sm font-bold text-slate-800">
+              <span class="w-6 h-6 rounded-full bg-[#003399] text-white flex items-center justify-center text-xs">4</span>
+              Tipologías (Modelos)
+            </div>
+            <button type="button" @click="agregarTipologia" class="bg-[#003399]/10 text-[#003399] hover:bg-[#003399]/20 text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 transition-colors cursor-pointer">
+              <Plus class="w-4 h-4" /> Añadir tipología
+            </button>
+          </div>
+
+          <div v-for="(tipo, index) in tipologias" :key="index" class="p-4 bg-slate-50 border border-slate-200 rounded-xl relative">
+            <button v-if="tipologias.length > 1" type="button" @click="eliminarTipologia(index)" class="absolute top-4 right-4 text-slate-400 hover:text-red-500 transition-colors">
+              <Trash2 class="w-4 h-4" />
+            </button>
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Código *</label>
+                <input v-model="tipo.codigoTipologia" type="text" placeholder="Ej: 2D2B" required class="w-full border border-slate-200 bg-white rounded-lg p-2 text-xs focus:outline-none focus:border-[#003399]" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Dorms.</label>
+                <input v-model.number="tipo.dormitorios" type="number" min="0" class="w-full border border-slate-200 bg-white rounded-lg p-2 text-xs focus:outline-none focus:border-[#003399]" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Baños</label>
+                <input v-model.number="tipo.banos" type="number" min="0" step="0.5" class="w-full border border-slate-200 bg-white rounded-lg p-2 text-xs focus:outline-none focus:border-[#003399]" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Superficie (m²)</label>
+                <input v-model.number="tipo.superficieM2" type="number" min="1" step="0.1" class="w-full border border-slate-200 bg-white rounded-lg p-2 text-xs focus:outline-none focus:border-[#003399]" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Valor (UF)</label>
+                <input v-model.number="tipo.valorEnUf" type="number" min="1" class="w-full border border-slate-200 bg-white rounded-lg p-2 text-xs focus:outline-none focus:border-[#003399]" />
+              </div>
+            </div>
+          </div>
+          
+          <p v-if="tipologias.length === 0" class="text-sm text-slate-500 text-center py-4">No has añadido ninguna tipología. Presiona "Añadir tipología" para incluir al menos una.</p>
+        </div>
+
+        <!-- Imágenes omitidas según el plan actual -->
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-200/60">
+          <router-link to="/catalogo" class="px-5 py-2.5 rounded-xl font-bold text-xs text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer text-center flex items-center">
+            Cancelar
+          </router-link>
+          <button type="submit" :disabled="guardando" class="px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-[#003399] hover:bg-blue-800 transition-all shadow-md cursor-pointer flex items-center gap-2 disabled:opacity-50">
+            <Save class="w-4 h-4" /> {{ guardando ? 'Guardando...' : 'Guardar Proyecto' }}
           </button>
         </div>
 
-        <div>
-          <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Descripción de la propiedad *</label>
-          <textarea v-model="descripcionIa" rows="4" placeholder="Describe las características, beneficios y entorno del proyecto..." class="w-full border border-slate-200 bg-slate-50/50 rounded-xl p-4 text-sm focus:outline-none focus:border-[#003399] focus:bg-white transition-colors resize-none leading-relaxed"></textarea>
-          <div class="text-right text-[10px] font-bold text-slate-400 mt-1">0 / 4000 caracteres</div>
-        </div>
-      </div>
-
-      <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col gap-4">
-        <div class="flex items-center gap-2 text-sm font-bold text-slate-800">
-          <span class="w-6 h-6 rounded-full bg-[#003399] text-white flex items-center justify-center text-xs">4</span>
-          Archivos Multimedia
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="border-2 border-dashed border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center text-center bg-slate-50/50 hover:bg-slate-50 transition-colors cursor-pointer">
-            <CloudUpload class="w-10 h-10 text-slate-300" />
-            <p class="text-xs font-bold text-slate-700 mt-2">Arrastra y suelta imágenes aquí</p>
-            <p class="text-[10px] text-slate-400 mt-1">Formatos: JPG, PNG, WebP • Máx 10MB</p>
-          </div>
-          <div class="border border-slate-200 rounded-xl p-6 flex flex-col justify-between bg-slate-50/30">
-            <div>
-              <div class="flex justify-between items-center">
-                <h4 class="text-xs font-bold text-slate-700">Imagen Panorámica 360°</h4>
-                <div class="w-8 h-4 bg-slate-200 rounded-full p-0.5 cursor-pointer flex justify-start"><div class="w-3 h-3 bg-white rounded-full shadow-sm"></div></div>
-              </div>
-              <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">Activa esta opción si deseas subir un recorrido virtual inmersivo esférico para el proyecto.</p>
-            </div>
-            <div class="border border-slate-200 bg-white rounded-xl p-3 flex items-center gap-3 text-left mt-4">
-              <ImageIcon class="w-6 h-6 text-slate-400" />
-              <div>
-                <p class="text-[11px] font-bold text-slate-700">Seleccionar imagen panorámica 360°</p>
-                <p class="text-[9px] text-slate-400">Formatos: JPG • Max 20MB</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex justify-end gap-3 pt-2 border-t border-slate-200/60">
-        <button class="px-5 py-2.5 rounded-xl font-bold text-xs text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer">Cancelar</button>
-        <button class="px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-[#003399] hover:bg-blue-800 transition-all shadow-md cursor-pointer flex items-center gap-2">
-          <Save class="w-4 h-4" /> Guardar Proyecto
-        </button>
-      </div>
-
+      </form>
     </div>
   </AdminLayout>
 </template>

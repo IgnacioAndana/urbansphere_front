@@ -12,7 +12,5 @@
  * (proyectos, propiedades, propiedad_imagenes, propiedad_caracteristicas, tours_virtuales)
  */
 
-/** Placeholder hasta que el MS Projects esté expuesto en el BFF */
-export const proyectosService = {
-  // implementar cuando estén disponibles los endpoints
-}
+export { proyectosService } from './proyectosService';
+export { tipologiasService } from './tipologiasService';
