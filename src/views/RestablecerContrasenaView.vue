@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { authService } from '../services/usuarios'
+import CampoContrasena from '../components/CampoContrasena.vue'
 import { obtenerMensajeError } from '../utils/apiError'
 import isotipoUrl from '../assets/UrbanSphere-Isotipo.png'
 
@@ -76,11 +77,21 @@ const restablecer = async () => {
       <form v-if="tokenValido && !listo" class="flex flex-col gap-4" @submit.prevent="restablecer">
         <div>
           <label class="block text-sm font-bold text-slate-900 mb-2">Nueva contraseña</label>
-          <input v-model="contrasena" type="password" required minlength="8" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#003399]" />
+          <CampoContrasena
+            v-model="contrasena"
+            placeholder="Mínimo 8 caracteres"
+            required
+            autocomplete="new-password"
+          />
         </div>
         <div>
           <label class="block text-sm font-bold text-slate-900 mb-2">Confirmar contraseña</label>
-          <input v-model="contrasenaConfirm" type="password" required class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#003399]" />
+          <CampoContrasena
+            v-model="contrasenaConfirm"
+            placeholder="Repite la contraseña"
+            required
+            autocomplete="new-password"
+          />
         </div>
         <button type="submit" :disabled="cargando" class="w-full bg-[#003399] text-white py-3 rounded-xl font-bold hover:bg-blue-800 disabled:opacity-50">
           {{ cargando ? 'Guardando...' : 'Restablecer contraseña' }}

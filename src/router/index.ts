@@ -69,6 +69,12 @@ const routes: Array<RouteRecordRaw> = [
     meta: { requiresAuth: true } // Adaptado al logic de HEAD o simplemente requiere auth
   },
   {
+    path: '/perfil',
+    name: 'perfil',
+    component: () => import('../views/PerfilView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/admin',
     redirect: '/admin/proyectos'
   },

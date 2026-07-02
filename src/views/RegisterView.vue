@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { ArrowLeft, Eye, EyeOff } from 'lucide-vue-next';
+import { ArrowLeft } from 'lucide-vue-next';
+import CampoContrasena from '../components/CampoContrasena.vue';
 import { usuariosService } from '../services/usuarios';
 import type { RegistrarUsuarioDto } from '../types/usuarios';
 import isotipoUrl from '../assets/UrbanSphere-Isotipo.png';
@@ -12,8 +13,6 @@ const nombre = ref('');
 const email = ref('');
 const contrasena = ref('');
 const confirmarContrasena = ref('');
-const mostrarContrasena = ref(false);
-const mostrarConfirmarContrasena = ref(false);
 
 const cargando = ref(false);
 const errorMsg = ref('');
@@ -78,7 +77,7 @@ const manejarRegistro = async () => {
         <div class="flex flex-col items-center mb-2">
           <img :src="isotipoUrl" alt="UrbanSphere Isotipo" class="h-32 object-contain mb-2" />
           <h2 class="text-3xl font-black text-slate-900">Crear cuenta</h2>
-          <p class="text-slate-500 mt-2 text-sm text-center">Registra tus datos y selecciona tu perfil para comenzar.</p>
+          <p class="text-slate-500 mt-2 text-sm text-center">Registra tus datos para comenzar en UrbanSphere.</p>
         </div>
 
         <div v-if="errorMsg" class="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl text-xs font-semibold">
@@ -102,27 +101,23 @@ const manejarRegistro = async () => {
           
           <div>
             <label class="block text-sm font-bold text-slate-900 mb-1">Contraseña</label>
-            <div class="relative">
-              <input v-model="contrasena" :type="mostrarContrasena ? 'text' : 'password'" placeholder="Crea una contraseña segura" class="w-full border border-slate-300 rounded-xl px-4 pr-10 py-2.5 text-sm focus:outline-none focus:border-[#003399] transition-colors" required />
-              <button type="button" @click="mostrarContrasena = !mostrarContrasena" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none cursor-pointer">
-                <EyeOff v-if="mostrarContrasena" class="w-5 h-5" />
-                <Eye v-else class="w-5 h-5" />
-              </button>
-            </div>
+            <CampoContrasena
+              v-model="contrasena"
+              placeholder="Crea una contraseña segura"
+              required
+              autocomplete="new-password"
+            />
           </div>
 
           <div>
             <label class="block text-sm font-bold text-slate-900 mb-1">Confirmar contraseña</label>
-            <div class="relative">
-              <input v-model="confirmarContrasena" :type="mostrarConfirmarContrasena ? 'text' : 'password'" placeholder="Repite la contraseña" class="w-full border border-slate-300 rounded-xl px-4 pr-10 py-2.5 text-sm focus:outline-none focus:border-[#003399] transition-colors" required />
-              <button type="button" @click="mostrarConfirmarContrasena = !mostrarConfirmarContrasena" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none cursor-pointer">
-                <EyeOff v-if="mostrarConfirmarContrasena" class="w-5 h-5" />
-                <Eye v-else class="w-5 h-5" />
-              </button>
-            </div>
+            <CampoContrasena
+              v-model="confirmarContrasena"
+              placeholder="Repite la contraseña"
+              required
+              autocomplete="new-password"
+            />
           </div>
-
-          <!-- Selector de Rol eliminado, siempre es Usuario Estándar -->
 
           <button type="submit" :disabled="cargando" class="w-full bg-[#003399] text-white py-3 rounded-xl font-bold hover:bg-blue-800 transition-colors mt-4 cursor-pointer disabled:opacity-50">
             {{ cargando ? 'Registrando...' : 'Registrar usuario' }}
@@ -134,7 +129,7 @@ const manejarRegistro = async () => {
             ¿Ya tienes cuenta? Inicia sesión aquí
           </router-link>
           <router-link to="/" class="text-sm font-bold text-slate-400 hover:text-[#003399] transition-colors flex items-center justify-center gap-1">
-            <ArrowLeft class="w-4 h-4" /> Volver al Catálogo Público
+            <ArrowLeft class="w-4 h-4" /> Volver
           </router-link>
         </div>
 

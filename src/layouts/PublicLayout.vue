@@ -3,7 +3,6 @@ import { onMounted, ref, watch, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { LogOut, Settings, User } from 'lucide-vue-next'
 import imagotipoUrl from '../assets/UrbanSphere-Imagotipo.png'
-import MiPerfilModal from '../components/MiPerfilModal.vue'
 import { useSesion } from '../composables/useSesion'
 import { queryLoginDesde } from '../utils/authRedirect'
 
@@ -11,7 +10,6 @@ const router = useRouter()
 const route = useRoute()
 const { autenticado, nombre, accesoAdmin, cargarSesion, cerrarSesion } = useSesion()
 const cerrando = ref(false)
-const perfilAbierto = ref(false)
 const menuAbierto = ref(false)
 
 const loginQuery = computed(() => queryLoginDesde(route.path, route.fullPath))
@@ -27,10 +25,6 @@ watch(
     menuAbierto.value = false
   },
 )
-
-const onPerfilActualizado = () => {
-  cargarSesion()
-}
 
 const manejarCerrarSesion = async () => {
   cerrando.value = true
@@ -53,7 +47,7 @@ const manejarCerrarSesion = async () => {
         <img :src="imagotipoUrl" alt="UrbanSphere Logo" class="h-15 w-60 object-contain" />
       </router-link>
       
-      <!-- Nav desktop (con clases responsivas si se necesitara, aquí es directo desktop) -->
+      <!-- Nav desktop -->
       <nav class="hidden lg:flex items-center gap-6 font-semibold text-sm text-slate-600">
         <router-link to="/" class="hover:text-[#003399] transition-colors py-1" exact-active-class="text-[#003399] border-b-2 border-[#003399]">Inicio</router-link>
         <router-link to="/catalogo" class="hover:text-[#003399] transition-colors py-1" exact-active-class="text-[#003399] border-b-2 border-[#003399]">Catálogo</router-link>
@@ -67,7 +61,6 @@ const manejarCerrarSesion = async () => {
         <template v-else>
           <div class="flex items-center gap-4">
             
-            <!-- Saludo Premium -->
             <div class="flex items-center gap-3 pr-4 border-r border-slate-200">
               <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-[#003399] to-blue-400 flex items-center justify-center text-white shadow-md border-2 border-white">
                 <span class="text-xs font-black">{{ (nombre ?? 'Usuario').substring(0, 2).toUpperCase() }}</span>
@@ -78,16 +71,14 @@ const manejarCerrarSesion = async () => {
               </div>
             </div>
 
-            <!-- Botones de Acción -->
-            <button
+            <router-link
               v-if="!accesoAdmin"
-              type="button"
+              to="/perfil"
               title="Mi perfil"
               class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-[#003399] transition-all"
-              @click="perfilAbierto = true"
             >
               <User class="w-4 h-4" /> Mi Perfil
-            </button>
+            </router-link>
             
             <router-link v-if="accesoAdmin" to="/admin/nuevo-proyecto" class="flex items-center gap-2 bg-gradient-to-r from-slate-900 to-slate-800 text-white px-4 py-2 rounded-xl text-sm font-bold hover:from-[#003399] hover:to-blue-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
               <Settings class="w-4 h-4" /> Panel Admin
@@ -120,15 +111,17 @@ const manejarCerrarSesion = async () => {
     <!-- Menú desplegable móvil -->
     <div
       v-if="menuAbierto"
-      class="lg:hidden border-t border-slate-100 bg-white px-4 py-4 flex flex-col gap-3"
+      class="lg:hidden border-t border-slate-100 bg-white px-6 py-6 flex flex-col items-center gap-4 text-center"
     >
-      <router-link to="/" class="text-sm font-semibold text-slate-700 hover:text-[#003399]" @click="menuAbierto = false">Inicio</router-link>
-      <router-link to="/catalogo" class="text-sm font-semibold text-slate-700 hover:text-[#003399]" @click="menuAbierto = false">Catálogo</router-link>
-      <router-link to="/contacto" class="text-sm font-semibold text-slate-700 hover:text-[#003399]" @click="menuAbierto = false">Contacto</router-link>
+      <nav class="flex flex-col items-center gap-1 w-full max-w-xs">
+        <router-link to="/" class="w-full py-2.5 text-sm font-semibold text-slate-700 hover:text-[#003399] rounded-lg hover:bg-slate-50 transition-colors" @click="menuAbierto = false">Inicio</router-link>
+        <router-link to="/catalogo" class="w-full py-2.5 text-sm font-semibold text-slate-700 hover:text-[#003399] rounded-lg hover:bg-slate-50 transition-colors" @click="menuAbierto = false">Catálogo</router-link>
+        <router-link to="/contacto" class="w-full py-2.5 text-sm font-semibold text-slate-700 hover:text-[#003399] rounded-lg hover:bg-slate-50 transition-colors" @click="menuAbierto = false">Contacto</router-link>
+      </nav>
 
       <template v-if="autenticado">
-        <div class="flex items-center gap-3 p-4 bg-slate-50 rounded-xl mt-2 mb-2">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-[#003399] to-blue-400 flex items-center justify-center text-white shadow-sm border-2 border-white shrink-0">
+        <div class="flex flex-col items-center gap-3 p-4 bg-slate-50 rounded-xl w-full max-w-xs mt-2">
+          <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-[#003399] to-blue-400 flex items-center justify-center text-white shadow-sm border-2 border-white">
              <span class="text-sm font-black">{{ (nombre ?? 'Usuario').substring(0, 2).toUpperCase() }}</span>
           </div>
           <div>
@@ -137,38 +130,40 @@ const manejarCerrarSesion = async () => {
           </div>
         </div>
 
-        <button
-          v-if="!accesoAdmin"
-          type="button"
-          class="flex items-center gap-3 w-full text-left text-sm font-bold text-slate-700 hover:bg-blue-50 hover:text-[#003399] p-3 rounded-xl transition-colors"
-          @click="perfilAbierto = true; menuAbierto = false"
-        >
-          <User class="w-5 h-5" /> Mi perfil
-        </button>
+        <div class="flex flex-col items-center gap-2 w-full max-w-xs">
+          <router-link
+            v-if="!accesoAdmin"
+            to="/perfil"
+            class="flex items-center justify-center gap-2 w-full text-sm font-bold text-slate-700 hover:bg-blue-50 hover:text-[#003399] p-3 rounded-xl transition-colors"
+            @click="menuAbierto = false"
+          >
+            <User class="w-5 h-5" /> Mi perfil
+          </router-link>
 
-        <router-link
-          v-if="accesoAdmin"
-          to="/admin/nuevo-proyecto"
-          class="flex items-center justify-center gap-2 bg-gradient-to-r from-slate-900 to-slate-800 text-white p-3 rounded-xl text-sm font-bold shadow-md hover:from-[#003399] hover:to-blue-700 transition-all"
-          @click="menuAbierto = false"
-        >
-          <Settings class="w-5 h-5" /> Panel Admin
-        </router-link>
+          <router-link
+            v-if="accesoAdmin"
+            to="/admin/nuevo-proyecto"
+            class="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-slate-900 to-slate-800 text-white p-3 rounded-xl text-sm font-bold shadow-md hover:from-[#003399] hover:to-blue-700 transition-all"
+            @click="menuAbierto = false"
+          >
+            <Settings class="w-5 h-5" /> Panel Admin
+          </router-link>
 
-        <button
-          type="button"
-          :disabled="cerrando"
-          class="flex items-center justify-center gap-2 w-full border border-slate-200 text-slate-600 p-3 rounded-xl text-sm font-bold hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-colors disabled:opacity-50 mt-1"
-          @click="manejarCerrarSesion"
-        >
-          <LogOut class="w-5 h-5" /> {{ cerrando ? 'Saliendo...' : 'Cerrar sesión' }}
-        </button>
+          <button
+            type="button"
+            :disabled="cerrando"
+            class="flex items-center justify-center gap-2 w-full border border-slate-200 text-slate-600 p-3 rounded-xl text-sm font-bold hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-colors disabled:opacity-50"
+            @click="manejarCerrarSesion"
+          >
+            <LogOut class="w-5 h-5" /> {{ cerrando ? 'Saliendo...' : 'Cerrar sesión' }}
+          </button>
+        </div>
       </template>
 
       <router-link
         v-else
         :to="{ name: 'login', query: loginQuery }"
-        class="bg-[#003399] text-white px-4 py-2.5 rounded-lg text-sm font-bold text-center"
+        class="w-full max-w-xs bg-[#003399] text-white px-4 py-2.5 rounded-lg text-sm font-bold text-center"
         @click="menuAbierto = false"
       >
         Iniciar sesión
@@ -178,7 +173,5 @@ const manejarCerrarSesion = async () => {
     <main class="flex-1 flex flex-col min-h-0 overflow-y-auto">
       <slot />
     </main>
-
-    <MiPerfilModal :abierto="perfilAbierto" @cerrar="perfilAbierto = false" @actualizado="onPerfilActualizado" />
   </div>
 </template>
