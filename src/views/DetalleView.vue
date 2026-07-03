@@ -272,7 +272,7 @@ watch(proyectoId, cargar)
               <img
                 :src="imagenProyectoActiva.urlS3"
                 :alt="detalle.proyecto.titulo"
-                class="max-w-full max-h-[480px] w-auto h-auto object-contain"
+                class="max-w-full max-h-[480px] w-auto h-auto object-contain rounded-2xl shadow-sm"
               />
             </div>
             <div v-else class="min-h-[260px] max-h-[520px] flex items-center justify-center bg-slate-100">
@@ -340,12 +340,12 @@ watch(proyectoId, cargar)
                 Cargando imágenes...
               </div>
               <template v-else-if="imagenesTipologiaOrdenadas.length">
-                <div class="w-full aspect-[4/3] max-h-[360px] bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-center p-2">
+                <div class="w-full aspect-[4/3] max-h-[360px] bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-center p-3 sm:p-4">
                   <img
                     v-if="imagenTipologiaActiva"
                     :src="imagenTipologiaActiva.urlS3"
                     :alt="`Tipología ${tipologiaSeleccionada.codigoTipologia}`"
-                    class="max-w-full max-h-full object-contain"
+                    class="max-w-full max-h-full object-contain rounded-xl shadow-sm"
                   />
                 </div>
                 <div v-if="imagenesTipologiaOrdenadas.length > 1" class="mt-3 flex gap-2 overflow-x-auto">
