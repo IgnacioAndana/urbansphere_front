@@ -181,3 +181,4 @@ Front_UrbanSphere/
 4. Confirmar `VITE_API_BASE_URL` con el equipo  
 5. `npm run dev`  
 6. Probar login en `http://localhost:5173/login`  
+
