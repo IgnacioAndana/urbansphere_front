@@ -41,7 +41,6 @@ export interface ProyectoImagen {
   urlS3: string
   etiqueta?: string
   esPortada: boolean
-  esPanoramica360: boolean
   orden: number
 }
 
@@ -49,7 +48,6 @@ export interface CrearProyectoImagenDto {
   urlS3?: string
   etiqueta?: string
   esPortada?: boolean
-  esPanoramica360?: boolean
   orden?: number
 }
 
@@ -58,7 +56,6 @@ export interface TipologiaImagen {
   tipologiaId: number
   urlS3: string
   esPortada: boolean
-  esPanoramica360: boolean
   orden: number
 }
 

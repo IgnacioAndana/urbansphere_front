@@ -1,6 +1,7 @@
 import axios from 'axios'
 import api from '../api'
 import type { CrearProyectoImagenDto, ProyectoImagen } from '../../types/proyectos'
+import type { ActualizarImagenDto } from '../../utils/imagenesGaleria'
 
 function esGaleriaVacia(error: unknown): boolean {
   return axios.isAxiosError(error) && error.response?.status === 404
@@ -22,15 +23,17 @@ export const imagenesProyectoService = {
     return data
   },
 
+  /**
+   * Sube imagen a S3. No envía esPortada: el MS asigna portada a la primera imagen
+   * y al marcar otra vía PATCH desmarca la anterior.
+   */
   async subirArchivo(
     proyectoId: number,
     archivo: File,
-    opts?: { esPortada?: boolean; esPanoramica360?: boolean; etiqueta?: string; orden?: number },
+    opts?: { etiqueta?: string; orden?: number },
   ): Promise<ProyectoImagen> {
     const form = new FormData()
     form.append('archivo', archivo)
-    if (opts?.esPortada) form.append('esPortada', 'true')
-    if (opts?.esPanoramica360) form.append('esPanoramica360', 'true')
     if (opts?.etiqueta) form.append('etiqueta', opts.etiqueta)
     if (opts?.orden != null) form.append('orden', String(opts.orden))
 
@@ -43,7 +46,7 @@ export const imagenesProyectoService = {
   async actualizar(
     proyectoId: number,
     imagenId: number,
-    dto: Partial<CrearProyectoImagenDto>,
+    dto: ActualizarImagenDto,
   ): Promise<ProyectoImagen> {
     const { data } = await api.patch<ProyectoImagen>(
       `/proyectos/${proyectoId}/imagenes/${imagenId}`,

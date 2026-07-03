@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { Plus, Pencil, Trash2, Image, X } from 'lucide-vue-next'
+import { Plus, Pencil, Trash2, Image, X, Star } from 'lucide-vue-next'
 import ConfirmModal from '../../../components/ConfirmModal.vue'
 import { tipologiasService, imagenesTipologiaService } from '../../../services/proyectos'
 import type { CrearTipologiaDto, Tipologia, TipologiaImagen } from '../../../types/proyectos'
 import { obtenerMensajeError } from '../../../utils/apiError'
 import { validarTipologiaForm, normalizarTipologiaDto } from '../../../utils/validacionesProyecto'
+import { ordenarImagenes } from '../../../utils/imagenesGaleria'
 
 const route = useRoute()
 const proyectoId = computed(() => Number(route.params.proyectoId))
@@ -39,6 +40,8 @@ const imagenes = ref<TipologiaImagen[]>([])
 const cargandoImagenes = ref(false)
 const subiendoImagen = ref(false)
 const errorImagenesModal = ref('')
+
+const imagenesOrdenadas = computed(() => ordenarImagenes(imagenes.value))
 
 onMounted(async () => {
   if (route.query.creado === '1') {
@@ -149,15 +152,27 @@ async function subirImagenTipologia(event: Event) {
   subiendoImagen.value = true
   errorImagenesModal.value = ''
   try {
-    await imagenesTipologiaService.subirArchivo(proyectoId.value, t.id, file, {
-      esPortada: imagenes.value.length === 0,
-    })
+    await imagenesTipologiaService.subirArchivo(proyectoId.value, t.id, file)
     imagenes.value = await imagenesTipologiaService.listar(proyectoId.value, t.id)
     input.value = ''
   } catch (error) {
     errorImagenesModal.value = obtenerMensajeError(error, 'Error al subir imagen.')
   } finally {
     subiendoImagen.value = false
+  }
+}
+
+async function marcarPortadaTipologia(imagenId: number) {
+  const t = tipologiaImagenes.value
+  if (!t) return
+  errorImagenesModal.value = ''
+  try {
+    await imagenesTipologiaService.actualizar(proyectoId.value, t.id, imagenId, {
+      esPortada: true,
+    })
+    imagenes.value = await imagenesTipologiaService.listar(proyectoId.value, t.id)
+  } catch (error) {
+    errorImagenesModal.value = obtenerMensajeError(error, 'No se pudo marcar como portada.')
   }
 }
 
@@ -301,16 +316,47 @@ async function eliminarImagen(imagenId: number) {
           <div v-if="errorImagenesModal" class="mb-3 text-sm text-red-700 bg-red-50 border border-red-200 p-3 rounded-xl">
             {{ errorImagenesModal }}
           </div>
+          <p class="text-xs text-slate-500 mb-3 leading-relaxed">
+            Una sola portada por tipología. La primera imagen queda como portada; al borrarla, el servidor asigna la más antigua restante.
+          </p>
           <label class="block w-full border-2 border-dashed border-slate-200 rounded-xl p-4 text-center text-sm text-slate-500 cursor-pointer hover:border-[#003399] mb-4">
             <input type="file" accept="image/*" class="hidden" :disabled="subiendoImagen" @change="subirImagenTipologia" />
-            {{ subiendoImagen ? 'Subiendo...' : 'Subir imagen de tipología' }}
+            {{ subiendoImagen ? 'Subiendo...' : 'Agregar imagen' }}
           </label>
           <div v-if="cargandoImagenes" class="text-center text-slate-400 py-4">Cargando...</div>
           <div v-else class="grid grid-cols-2 gap-3">
-            <div v-for="img in imagenes" :key="img.id" class="relative group rounded-xl overflow-hidden border border-slate-200">
+            <div
+              v-for="img in imagenesOrdenadas"
+              :key="img.id"
+              class="relative group rounded-xl overflow-hidden border"
+              :class="img.esPortada ? 'border-[#003399] ring-2 ring-[#003399]/20' : 'border-slate-200'"
+            >
               <img :src="img.urlS3" :alt="`Tipología ${tipologiaImagenes.codigoTipologia}`" class="w-full h-28 object-cover" />
-              <button type="button" class="absolute top-2 right-2 p-1 bg-white/90 rounded-full opacity-0 group-hover:opacity-100" @click="eliminarImagen(img.id)"><Trash2 class="w-3 h-3 text-red-600" /></button>
-              <span v-if="img.esPortada" class="absolute bottom-1 left-1 text-[10px] bg-[#003399] text-white px-2 py-0.5 rounded">Portada</span>
+              <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  v-if="!img.esPortada"
+                  type="button"
+                  title="Marcar portada"
+                  class="p-1 bg-white/90 rounded-full text-slate-500 hover:text-amber-500"
+                  @click="marcarPortadaTipologia(img.id)"
+                >
+                  <Star class="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  title="Eliminar"
+                  class="p-1 bg-white/90 rounded-full text-red-600"
+                  @click="eliminarImagen(img.id)"
+                >
+                  <Trash2 class="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <span
+                v-if="img.esPortada"
+                class="absolute bottom-1 left-1 text-[10px] bg-[#003399] text-white px-2 py-0.5 rounded font-bold uppercase"
+              >
+                Portada
+              </span>
             </div>
           </div>
           <p v-if="!cargandoImagenes && imagenes.length === 0" class="text-sm text-slate-400 text-center py-4">Sin imágenes aún.</p>
