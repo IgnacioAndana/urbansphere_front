@@ -21,12 +21,12 @@ const emit = defineEmits<{
 
 <template>
   <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm flex flex-col sm:flex-row group hover:border-[#003399] transition-colors">
-    <div class="w-full sm:w-2/5 h-40 sm:h-auto min-h-[140px] relative bg-slate-100 sm:border-r border-slate-100 overflow-hidden">
+    <div class="w-full sm:w-2/5 h-44 sm:min-h-[180px] sm:h-auto relative bg-slate-100 sm:border-r border-slate-100 flex items-center justify-center p-2 overflow-hidden">
       <img
         v-if="prop.urlPortada"
         :src="prop.urlPortada"
         :alt="prop.titulo"
-        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+        class="max-w-full max-h-full object-contain"
       />
       <div v-else class="w-full h-full flex items-center justify-center p-4">
         <img :src="isotipoUrl" alt="" class="w-20 h-20 object-contain opacity-30" />

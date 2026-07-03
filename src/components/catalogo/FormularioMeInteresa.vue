@@ -52,6 +52,10 @@ watch(() => props.tituloProyecto, precargarDatos)
 
 async function enviar() {
   errorMsg.value = ''
+  if (!nombre.value.trim() || !email.value.trim()) {
+    errorMsg.value = 'No se pudieron cargar tus datos de sesión. Cierra sesión e ingresa de nuevo.'
+    return
+  }
   enviando.value = true
   try {
     await solicitudesInteresService.enviar({
@@ -93,23 +97,28 @@ async function enviar() {
       </div>
 
       <div>
-        <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Nombre completo *</label>
+        <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Nombre completo</label>
         <input
           v-model="nombre"
           type="text"
-          required
-          class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:border-[#003399] bg-slate-50 focus:bg-white"
+          readonly
+          tabindex="-1"
+          class="w-full border border-slate-200 rounded-xl p-3 text-sm bg-slate-100 text-slate-600 cursor-default"
+          aria-readonly="true"
         />
       </div>
       <div>
-        <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Correo electrónico *</label>
+        <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Correo electrónico</label>
         <input
           v-model="email"
           type="email"
-          required
-          class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:border-[#003399] bg-slate-50 focus:bg-white"
+          readonly
+          tabindex="-1"
+          class="w-full border border-slate-200 rounded-xl p-3 text-sm bg-slate-100 text-slate-600 cursor-default"
+          aria-readonly="true"
         />
       </div>
+      <p class="text-[11px] text-slate-400 -mt-1">Estos datos provienen de tu cuenta y no se pueden modificar aquí.</p>
       <div>
         <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Mensaje</label>
         <textarea

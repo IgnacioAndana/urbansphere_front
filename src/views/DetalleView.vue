@@ -265,13 +265,17 @@ watch(proyectoId, cargar)
 
           <!-- Galería del proyecto -->
           <div class="rounded-3xl overflow-hidden border border-slate-200 shadow-sm bg-white">
-            <img
+            <div
               v-if="imagenProyectoActiva"
-              :src="imagenProyectoActiva.urlS3"
-              :alt="detalle.proyecto.titulo"
-              class="w-full h-[320px] sm:h-[420px] object-cover"
-            />
-            <div v-else class="h-[320px] sm:h-[420px] flex items-center justify-center bg-slate-100">
+              class="w-full bg-slate-100 flex items-center justify-center p-3 sm:p-4 min-h-[260px] max-h-[520px]"
+            >
+              <img
+                :src="imagenProyectoActiva.urlS3"
+                :alt="detalle.proyecto.titulo"
+                class="max-w-full max-h-[480px] w-auto h-auto object-contain"
+              />
+            </div>
+            <div v-else class="min-h-[260px] max-h-[520px] flex items-center justify-center bg-slate-100">
               <img :src="isotipoUrl" alt="" class="w-32 h-32 opacity-30 object-contain" />
             </div>
             <div v-if="imagenesOrdenadas.length > 1" class="p-4 flex gap-2 overflow-x-auto">
@@ -279,11 +283,11 @@ watch(proyectoId, cargar)
                 v-for="img in imagenesOrdenadas"
                 :key="img.id"
                 type="button"
-                class="shrink-0 rounded-lg overflow-hidden border-2 transition-all focus:outline-none focus:ring-2 focus:ring-[#003399]"
+                class="shrink-0 rounded-lg overflow-hidden border-2 transition-all focus:outline-none focus:ring-2 focus:ring-[#003399] bg-slate-100"
                 :class="img.id === imagenProyectoActivaId ? 'border-[#003399] ring-2 ring-blue-100' : 'border-slate-200 opacity-70 hover:opacity-100'"
                 @click="seleccionarImagenProyecto(img.id)"
               >
-                <img :src="img.urlS3" alt="Miniatura" class="w-20 h-20 object-cover" />
+                <img :src="img.urlS3" alt="Miniatura" class="w-20 h-20 object-contain" />
               </button>
             </div>
           </div>
@@ -336,22 +340,24 @@ watch(proyectoId, cargar)
                 Cargando imágenes...
               </div>
               <template v-else-if="imagenesTipologiaOrdenadas.length">
-                <img
-                  v-if="imagenTipologiaActiva"
-                  :src="imagenTipologiaActiva.urlS3"
-                  :alt="`Tipología ${tipologiaSeleccionada.codigoTipologia}`"
-                  class="w-full max-h-[360px] object-contain bg-slate-50 rounded-xl border border-slate-200"
-                />
+                <div class="w-full aspect-[4/3] max-h-[360px] bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-center p-2">
+                  <img
+                    v-if="imagenTipologiaActiva"
+                    :src="imagenTipologiaActiva.urlS3"
+                    :alt="`Tipología ${tipologiaSeleccionada.codigoTipologia}`"
+                    class="max-w-full max-h-full object-contain"
+                  />
+                </div>
                 <div v-if="imagenesTipologiaOrdenadas.length > 1" class="mt-3 flex gap-2 overflow-x-auto">
                   <button
                     v-for="img in imagenesTipologiaOrdenadas"
                     :key="img.id"
                     type="button"
-                    class="shrink-0 rounded-lg overflow-hidden border-2 transition-all focus:outline-none"
+                    class="shrink-0 rounded-lg overflow-hidden border-2 transition-all focus:outline-none bg-slate-100"
                     :class="img.id === imagenTipologiaActivaId ? 'border-[#003399]' : 'border-slate-200 opacity-70 hover:opacity-100'"
                     @click="seleccionarImagenTipologia(img.id)"
                   >
-                    <img :src="img.urlS3" alt="Miniatura tipología" class="w-16 h-16 object-cover" />
+                    <img :src="img.urlS3" alt="Miniatura tipología" class="w-16 h-16 object-contain" />
                   </button>
                 </div>
               </template>
