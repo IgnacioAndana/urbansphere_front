@@ -1,9 +1,10 @@
-import type { Proyecto, ProyectoImagen, Tipologia } from '../types/proyectos'
+import type { Proyecto, ProyectoImagen, Tipologia, TipoProyecto } from '../types/proyectos'
 import { ordenarImagenes } from './imagenesGaleria'
 
 export interface ProyectoCatalogoItem {
   id: number
   titulo: string
+  tipo: TipoProyecto
   comuna: string
   direccion: string
   latitud: number
@@ -46,8 +47,9 @@ export function mapProyectoCatalogo(
   const rangoM2 = rangoNumerico(m2)
 
   return {
-    id: proyecto.id,
+    id: Number(proyecto.id),
     titulo: proyecto.titulo,
+    tipo: normalizarTipoProyecto(proyecto.tipo),
     comuna: proyecto.comuna,
     direccion: proyecto.direccion,
     latitud: proyecto.latitud,
@@ -76,6 +78,15 @@ export function formatearPrecioUf(uf: number | null): string {
   return `UF ${uf.toLocaleString('es-CL')}`
 }
 
+export function normalizarTipoProyecto(valor: unknown): TipoProyecto {
+  const t = String(valor ?? '').toLowerCase()
+  return t === 'casa' ? 'casa' : 'departamento'
+}
+
+export function formatearTipoProyecto(tipo: TipoProyecto): string {
+  return tipo === 'casa' ? 'Casa' : 'Departamento'
+}
+
 export function extraerComunas(proyectos: ProyectoCatalogoItem[]): string[] {
   return [...new Set(proyectos.map((p) => p.comuna).filter(Boolean))].sort((a, b) =>
     a.localeCompare(b, 'es'),
@@ -87,12 +98,14 @@ export function filtrarProyectosCatalogo(
   opts: {
     texto?: string
     comuna?: string
+    tipo?: string
     precioMin?: number | null
     precioMax?: number | null
   },
 ): ProyectoCatalogoItem[] {
   const q = (opts.texto ?? '').trim().toLowerCase()
   return proyectos.filter((p) => {
+    if (opts.tipo && opts.tipo !== 'Todos' && p.tipo !== opts.tipo) return false
     if (opts.comuna && opts.comuna !== 'Todas' && p.comuna !== opts.comuna) return false
     if (opts.precioMin != null && p.precioDesdeUf != null && p.precioDesdeUf < opts.precioMin) {
       return false

@@ -11,11 +11,14 @@ import { esUsuarioEstandar } from '../../constants/roles'
 import { obtenerMensajeError } from '../../utils/apiError'
 import { mensajeInteresDefault } from '../../utils/catalogoProyecto'
 import { queryLoginDesde } from '../../utils/authRedirect'
+import { aEnteroPositivo } from '../../utils/numeros'
 
 const props = defineProps<{
-  proyectoId: number
+  proyectoId: number | string
   tituloProyecto: string
 }>()
+
+const proyectoIdNumerico = computed(() => aEnteroPositivo(props.proyectoId))
 
 const route = useRoute()
 
@@ -52,7 +55,7 @@ async function enviar() {
   enviando.value = true
   try {
     await solicitudesInteresService.enviar({
-      proyectoId: props.proyectoId,
+      proyectoId: proyectoIdNumerico.value,
       nombre: nombre.value.trim(),
       email: email.value.trim(),
     })
@@ -62,7 +65,7 @@ async function enviar() {
       await solicitudesContactoService.enviar({
         nombreCompleto: nombre.value.trim(),
         email: email.value.trim(),
-        mensaje: `Consulta sobre proyecto "${props.tituloProyecto}" (ID ${props.proyectoId}):\n\n${texto}`,
+        mensaje: `Consulta sobre proyecto "${props.tituloProyecto}" (ID ${proyectoIdNumerico.value}):\n\n${texto}`,
       })
     }
 

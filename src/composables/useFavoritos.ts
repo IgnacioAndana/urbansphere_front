@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 import { favoritosService, authService } from '../services/usuarios'
 import { esUsuarioEstandar } from '../constants/roles'
+import { aEnteroPositivo } from '../utils/numeros'
 
 const idsFavoritos = ref<Set<number>>(new Set())
 const cargandoFavoritos = ref(false)
@@ -11,8 +12,9 @@ export function useFavoritos() {
     return esUsuarioEstandar(authService.obtenerRolIdLocal())
   })
 
-  function esFavorito(proyectoId: number): boolean {
-    return idsFavoritos.value.has(proyectoId)
+  function esFavorito(proyectoId: number | string): boolean {
+    const id = aEnteroPositivo(proyectoId)
+    return idsFavoritos.value.has(id)
   }
 
   async function cargarFavoritos() {
@@ -31,17 +33,18 @@ export function useFavoritos() {
     }
   }
 
-  async function alternarFavorito(proyectoId: number): Promise<boolean> {
+  async function alternarFavorito(proyectoId: number | string): Promise<boolean> {
     if (!puedeUsarFavoritos.value) return false
 
-    const eraFavorito = esFavorito(proyectoId)
+    const id = aEnteroPositivo(proyectoId)
+    const eraFavorito = esFavorito(id)
     try {
       if (eraFavorito) {
-        await favoritosService.eliminarFavorito(proyectoId)
-        idsFavoritos.value.delete(proyectoId)
+        await favoritosService.eliminarFavorito(id)
+        idsFavoritos.value.delete(id)
       } else {
-        await favoritosService.agregarFavorito(proyectoId)
-        idsFavoritos.value.add(proyectoId)
+        await favoritosService.agregarFavorito(id)
+        idsFavoritos.value.add(id)
       }
       idsFavoritos.value = new Set(idsFavoritos.value)
       return true

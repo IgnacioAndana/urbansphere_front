@@ -1,35 +1,32 @@
-import api from '../api';
+import api from '../api'
+import { aEnteroPositivo, normalizarIdsNumericos } from '../../utils/numeros'
 
 export const favoritosService = {
-  /** GET /favoritos/ids — Obtiene los IDs de los proyectos favoritos del usuario (requiere JWT) */
   async obtenerIdsFavoritos(): Promise<number[]> {
-    const { data } = await api.get<{ proyectoIds: number[] }>('/favoritos/ids');
-    return data.proyectoIds || [];
+    const { data } = await api.get<{ proyectoIds: unknown[] }>('/favoritos/ids')
+    return normalizarIdsNumericos(data.proyectoIds ?? [])
   },
 
-  /** GET /favoritos/proyecto/:proyectoId — Verifica si un proyecto está en favoritos (requiere JWT) */
   async esFavorito(proyectoId: number): Promise<boolean> {
+    const id = aEnteroPositivo(proyectoId)
     try {
-      await api.get(`/favoritos/proyecto/${proyectoId}`);
-      return true;
+      await api.get(`/favoritos/proyecto/${id}`)
+      return true
     } catch {
-      return false;
+      return false
     }
   },
 
-  /** POST /favoritos — Añade un proyecto a favoritos (requiere JWT) */
   async agregarFavorito(proyectoId: number): Promise<void> {
-    await api.post('/favoritos', { proyectoId });
+    await api.post('/favoritos', { proyectoId: aEnteroPositivo(proyectoId) })
   },
 
-  /** DELETE /favoritos/:proyectoId — Elimina un proyecto de favoritos (requiere JWT) */
   async eliminarFavorito(proyectoId: number): Promise<void> {
-    await api.delete(`/favoritos/${proyectoId}`);
+    await api.delete(`/favoritos/${aEnteroPositivo(proyectoId)}`)
   },
 
-  /** GET /favoritos — Obtiene el listado completo de los favoritos del usuario (requiere JWT) */
-  async obtenerFavoritos(): Promise<any[]> {
-    const { data } = await api.get<any[]>('/favoritos');
-    return data;
-  }
-};
+  async obtenerFavoritos(): Promise<unknown[]> {
+    const { data } = await api.get<unknown[]>('/favoritos')
+    return data
+  },
+}

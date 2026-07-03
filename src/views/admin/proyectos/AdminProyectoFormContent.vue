@@ -3,6 +3,7 @@ import { Sparkles, Save } from 'lucide-vue-next'
 import ProyectoMapPicker from '../../../components/admin/proyectos/ProyectoMapPicker.vue'
 import { useProyectoForm } from '../../../composables/useProyectoForm'
 import { fechaMinimaHoyLocal } from '../../../utils/validacionesProyecto'
+import { TIPO_PROYECTO_OPCIONES } from '../../../types/proyectos'
 
 const fechaMinimaEntrega = fechaMinimaHoyLocal()
 
@@ -12,6 +13,7 @@ const {
   titulo,
   direccion,
   comuna,
+  tipo,
   fechaEntregaEstimada,
   estado,
   latitud,
@@ -50,9 +52,23 @@ const {
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tipo de propiedad *</label>
+            <select
+              v-model="tipo"
+              required
+              class="w-full border border-slate-200 bg-slate-50 rounded-xl p-3 text-sm focus:outline-none focus:border-[#003399] focus:bg-white"
+            >
+              <option v-for="op in TIPO_PROYECTO_OPCIONES" :key="op.value" :value="op.value">
+                {{ op.label }}
+              </option>
+            </select>
+          </div>
+          <div>
             <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Comuna *</label>
             <input v-model="comuna" type="text" required placeholder="Ej: Providencia" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-3 text-sm focus:outline-none focus:border-[#003399] focus:bg-white" />
           </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha entrega</label>
             <input
@@ -63,15 +79,15 @@ const {
             />
             <p class="text-[10px] text-slate-400 mt-1">No se permiten fechas anteriores a hoy.</p>
           </div>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Estado</label>
-          <select v-model="estado" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-3 text-sm focus:outline-none focus:border-[#003399] focus:bg-white">
-            <option value="borrador">Borrador</option>
-            <option value="activo">Activo</option>
-            <option value="inactivo">Inactivo</option>
-            <option value="archivado">Archivado</option>
-          </select>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Estado</label>
+            <select v-model="estado" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-3 text-sm focus:outline-none focus:border-[#003399] focus:bg-white">
+              <option value="borrador">Borrador</option>
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+              <option value="archivado">Archivado</option>
+            </select>
+          </div>
         </div>
       </div>
 

@@ -8,6 +8,7 @@ import ProyectoEstadoBadge from '../../../components/admin/proyectos/ProyectoEst
 import { proyectosService } from '../../../services/proyectos'
 import type { Proyecto } from '../../../types/proyectos'
 import { obtenerMensajeError } from '../../../utils/apiError'
+import { formatearTipoProyecto, normalizarTipoProyecto } from '../../../utils/catalogoProyecto'
 
 const router = useRouter()
 
@@ -91,6 +92,7 @@ async function confirmarEliminar() {
               <tr class="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider font-bold text-slate-500">
                 <th class="p-4 w-14">N°</th>
                 <th class="p-4">Título</th>
+                <th class="p-4">Tipo</th>
                 <th class="p-4">Comuna</th>
                 <th class="p-4">Entrega</th>
                 <th class="p-4">Estado</th>
@@ -99,14 +101,15 @@ async function confirmarEliminar() {
             </thead>
             <tbody class="divide-y divide-slate-100 text-sm">
               <tr v-if="cargando">
-                <td colspan="6" class="p-8 text-center text-slate-400">Cargando...</td>
+                <td colspan="7" class="p-8 text-center text-slate-400">Cargando...</td>
               </tr>
               <tr v-else-if="proyectosOrdenados.length === 0">
-                <td colspan="6" class="p-8 text-center text-slate-400">No hay proyectos. Crea el primero.</td>
+                <td colspan="7" class="p-8 text-center text-slate-400">No hay proyectos. Crea el primero.</td>
               </tr>
               <tr v-for="(p, index) in proyectosOrdenados" :key="p.id" class="hover:bg-slate-50">
                 <td class="p-4 text-slate-500 tabular-nums">{{ index + 1 }}</td>
                 <td class="p-4 font-bold text-slate-800">{{ p.titulo }}</td>
+                <td class="p-4 text-slate-600">{{ formatearTipoProyecto(normalizarTipoProyecto(p.tipo)) }}</td>
                 <td class="p-4 text-slate-600">{{ p.comuna }}</td>
                 <td class="p-4 text-slate-600">{{ formatDate(p.fechaEntregaEstimada) }}</td>
                 <td class="p-4"><ProyectoEstadoBadge :estado="p.estado" /></td>

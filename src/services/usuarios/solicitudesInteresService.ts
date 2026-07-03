@@ -1,13 +1,14 @@
-/**
- * MS Usuarios — Solicitudes de interés ("Me interesa este proyecto")
- * POST público u opcional con JWT
- */
 import api from '../api'
 import type { SolicitudInteres, SolicitudInteresDto } from '../../types/usuarios'
+import { aEnteroPositivo } from '../../utils/numeros'
 
 export const solicitudesInteresService = {
   async enviar(dto: SolicitudInteresDto): Promise<SolicitudInteres> {
-    const { data } = await api.post<SolicitudInteres>('/solicitudes-interes', dto)
+    const { data } = await api.post<SolicitudInteres>('/solicitudes-interes', {
+      proyectoId: aEnteroPositivo(dto.proyectoId),
+      nombre: dto.nombre,
+      email: dto.email,
+    })
     return data
   },
 
@@ -17,7 +18,8 @@ export const solicitudesInteresService = {
   },
 
   async listarPorProyecto(proyectoId: number): Promise<SolicitudInteres[]> {
-    const { data } = await api.get<SolicitudInteres[]>(`/solicitudes-interes/proyecto/${proyectoId}`)
+    const id = aEnteroPositivo(proyectoId)
+    const { data } = await api.get<SolicitudInteres[]>(`/solicitudes-interes/proyecto/${id}`)
     return data
   },
 }

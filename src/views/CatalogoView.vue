@@ -12,6 +12,7 @@ import {
   filtrarProyectosCatalogo,
   formatearPrecioUf,
   formatearRango,
+  formatearTipoProyecto,
   type ProyectoCatalogoItem,
 } from '../utils/catalogoProyecto'
 import { useFavoritos } from '../composables/useFavoritos'
@@ -28,6 +29,7 @@ const errorMsg = ref('')
 
 const filtroTexto = ref('')
 const filtroComuna = ref('Todas')
+const filtroTipo = ref('Todos')
 const precioMin = ref<number | null>(null)
 const precioMax = ref<number | null>(null)
 
@@ -39,6 +41,7 @@ const proyectos = computed(() =>
   filtrarProyectosCatalogo(proyectosRaw.value, {
     texto: filtroTexto.value,
     comuna: filtroComuna.value,
+    tipo: filtroTipo.value,
     precioMin: precioMin.value,
     precioMax: precioMax.value,
   }),
@@ -74,7 +77,7 @@ function renderizarPines(lista: ProyectoCatalogoItem[]) {
         <div class="flex flex-col gap-1 min-w-[160px] p-1">
           <div class="font-black text-lg text-slate-900">${precio}</div>
           <div class="font-bold text-sm text-[#003399] leading-tight">${prop.titulo}</div>
-          <div class="text-[10px] text-slate-500 uppercase tracking-wider mt-1">${prop.comuna}</div>
+          <div class="text-[10px] text-slate-500 uppercase tracking-wider mt-1">${formatearTipoProyecto(prop.tipo)} • ${prop.comuna}</div>
           <a href="/propiedad/${prop.id}" class="mt-3 block text-center bg-[#0f172a] text-white text-xs py-2 rounded-lg font-bold">Ver detalles</a>
         </div>
       `)
@@ -126,8 +129,8 @@ async function cargarCatalogo() {
 
 onMounted(cargarCatalogo)
 
-async function toggleFavorito(id: number) {
-  await alternarFavorito(id)
+async function toggleFavorito(id: number | string) {
+  await alternarFavorito(Number(id))
 }
 </script>
 
@@ -172,11 +175,21 @@ async function toggleFavorito(id: number) {
             </div>
             <div class="flex flex-col sm:flex-row gap-2">
               <select
+                v-model="filtroTipo"
+                class="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-600 bg-white focus:outline-none focus:border-[#003399]"
+              >
+                <option value="Todos">Todos los tipos</option>
+                <option value="departamento">Departamento</option>
+                <option value="casa">Casa</option>
+              </select>
+              <select
                 v-model="filtroComuna"
                 class="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-600 bg-white focus:outline-none focus:border-[#003399]"
               >
                 <option v-for="c in comunas" :key="c" :value="c">{{ c === 'Todas' ? 'Todas las comunas' : c }}</option>
               </select>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2">
               <input
                 v-model.number="precioMin"
                 type="number"
@@ -202,7 +215,7 @@ async function toggleFavorito(id: number) {
 
             <template v-else>
               <div class="flex justify-between items-center gap-2">
-                <h2 class="font-bold text-slate-900 text-sm">{{ proyectos.length }} departamentos encontrados</h2>
+                <h2 class="font-bold text-slate-900 text-sm">{{ proyectos.length }} propiedades encontradas</h2>
               </div>
 
               <p v-if="proyectos.length === 0" class="text-sm text-slate-400 text-center py-8">
@@ -229,7 +242,9 @@ async function toggleFavorito(id: number) {
                   <div class="w-full sm:w-3/5 p-4 flex flex-col justify-between min-w-0">
                     <div>
                       <h3 class="font-black text-xl sm:text-2xl text-slate-900">{{ formatearPrecioUf(prop.precioDesdeUf) }}</h3>
-                      <p class="text-[10px] text-slate-400 mt-0.5 uppercase tracking-wide font-bold">Desde · Departamento</p>
+                      <p class="text-[10px] text-slate-400 mt-0.5 uppercase tracking-wide font-bold">
+                        Desde · {{ formatearTipoProyecto(prop.tipo) }}
+                      </p>
                       <p class="font-bold text-sm text-slate-800 mt-3">{{ prop.titulo }}</p>
                       <p class="text-xs text-slate-500 mt-1 flex items-center gap-1">
                         <MapPin class="w-3 h-3" /> {{ prop.comuna }} · {{ prop.direccion }}

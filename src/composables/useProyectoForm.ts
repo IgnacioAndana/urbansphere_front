@@ -2,10 +2,11 @@ import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { proyectosService } from '../services/proyectos'
-import type { CrearProyectoDto } from '../types/proyectos'
+import type { CrearProyectoDto, TipoProyecto } from '../types/proyectos'
 import { obtenerMensajeError } from '../utils/apiError'
 import { GEMINI_API_KEY, tieneGeminiConfigurada } from '../config/env'
 import { validarFechaEntrega } from '../utils/validacionesProyecto'
+import { normalizarTipoProyecto } from '../utils/catalogoProyecto'
 
 export function useProyectoForm() {
   const route = useRoute()
@@ -21,6 +22,7 @@ export function useProyectoForm() {
   const titulo = ref('')
   const direccion = ref('')
   const comuna = ref('')
+  const tipo = ref<TipoProyecto>('departamento')
   const fechaEntregaEstimada = ref('')
   const estado = ref('borrador')
   const latitud = ref(-33.4489)
@@ -43,6 +45,7 @@ export function useProyectoForm() {
       titulo.value = p.titulo
       direccion.value = p.direccion
       comuna.value = p.comuna
+      tipo.value = normalizarTipoProyecto(p.tipo)
       fechaEntregaEstimada.value = p.fechaEntregaEstimada?.slice(0, 10) ?? ''
       estado.value = p.estado
       latitud.value = p.latitud
@@ -113,6 +116,7 @@ export function useProyectoForm() {
     if (!titulo.value.trim()) return 'El título es obligatorio.'
     if (!direccion.value.trim()) return 'La dirección es obligatoria.'
     if (!comuna.value.trim()) return 'La comuna es obligatoria.'
+    if (!tipo.value) return 'El tipo de propiedad es obligatorio.'
     if (!descripcion.value.trim()) return 'La descripción es obligatoria.'
     const errFecha = validarFechaEntrega(fechaEntregaEstimada.value)
     if (errFecha) return errFecha
@@ -124,6 +128,7 @@ export function useProyectoForm() {
       titulo: titulo.value.trim(),
       direccion: direccion.value.trim(),
       comuna: comuna.value.trim(),
+      tipo: tipo.value,
       fechaEntregaEstimada: fechaEntregaEstimada.value || undefined,
       latitud: latitud.value,
       longitud: longitud.value,
@@ -166,6 +171,7 @@ export function useProyectoForm() {
     titulo,
     direccion,
     comuna,
+    tipo,
     fechaEntregaEstimada,
     estado,
     latitud,

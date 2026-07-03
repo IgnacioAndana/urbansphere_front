@@ -10,6 +10,7 @@ import { obtenerMensajeError } from '../utils/apiError'
 import {
   formatearPrecioUf,
   formatearRango,
+  formatearTipoProyecto,
   obtenerUrlPortada,
 } from '../utils/catalogoProyecto'
 import { ordenarImagenes } from '../utils/imagenesGaleria'
@@ -103,7 +104,9 @@ watch(proyectoId, cargar)
             <div>
               <div class="flex items-center gap-3 mb-3">
                 <span class="text-xs bg-emerald-100 text-emerald-700 font-black px-3 py-1 rounded uppercase">En venta</span>
-                <span class="text-xs bg-blue-100 text-[#003399] font-black px-3 py-1 rounded uppercase">Departamento</span>
+                <span class="text-xs bg-blue-100 text-[#003399] font-black px-3 py-1 rounded uppercase">
+                  {{ formatearTipoProyecto(detalle.proyecto.tipo) }}
+                </span>
               </div>
               <h1 class="text-4xl font-black text-slate-900 leading-tight">{{ detalle.proyecto.titulo }}</h1>
               <p class="text-slate-500 font-medium mt-2 flex items-center gap-2">
@@ -119,7 +122,7 @@ watch(proyectoId, cargar)
                   type="button"
                   class="w-10 h-10 rounded-full bg-white border flex items-center justify-center transition-all shadow-sm"
                   :class="esFavorito(detalle.proyecto.id) ? 'border-red-200 text-red-500 bg-red-50' : 'border-slate-200 text-slate-400 hover:text-red-500'"
-                  @click="alternarFavorito(detalle.proyecto.id)"
+                  @click="alternarFavorito(Number(detalle.proyecto.id))"
                 >
                   <Heart class="w-5 h-5" :class="esFavorito(detalle.proyecto.id) ? 'fill-current' : ''" />
                 </button>
@@ -217,7 +220,10 @@ watch(proyectoId, cargar)
         </div>
 
         <div v-if="mostrarSidebarInteres" class="lg:col-span-4">
-          <FormularioMeInteresa :proyecto-id="detalle.proyecto.id" :titulo-proyecto="detalle.proyecto.titulo" />
+          <FormularioMeInteresa
+            :proyecto-id="Number(detalle.proyecto.id)"
+            :titulo-proyecto="detalle.proyecto.titulo"
+          />
         </div>
       </div>
     </div>

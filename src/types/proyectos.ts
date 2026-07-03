@@ -2,6 +2,7 @@ export interface CrearProyectoDto {
   titulo: string
   direccion: string
   comuna: string
+  tipo: TipoProyecto
   fechaEntregaEstimada?: string
   latitud: number
   longitud: number
@@ -9,12 +10,20 @@ export interface CrearProyectoDto {
   estado: string
 }
 
+export type TipoProyecto = 'casa' | 'departamento'
+
+export const TIPO_PROYECTO_OPCIONES: { value: TipoProyecto; label: string }[] = [
+  { value: 'departamento', label: 'Departamento' },
+  { value: 'casa', label: 'Casa' },
+]
+
 export interface Proyecto {
   id: number
   titulo: string
   slug: string
   direccion: string
   comuna: string
+  tipo: TipoProyecto
   fechaEntregaEstimada: string
   latitud: number
   longitud: number
