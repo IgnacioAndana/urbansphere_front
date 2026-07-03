@@ -7,6 +7,9 @@
 #   VITE_API_BASE_URL — URL del BFF en prod (ej. http://13.222.88.101/api)
 #   VITE_GEMINI_API_KEY — (opcional) API Key Gemini para redactar descripciones en admin
 #   VITE_MAX_IMAGEN_MB    — (opcional) Límite de subida de imágenes en MB; debe coincidir con nginx (default en workflow: 10)
+#
+# Variables fijas en el build (no son secrets; se embeben en dist/):
+#   VITE_GEMINI_MODEL — modelo Gemini (gemini-1.5-flash fue retirado por Google)
 
 name: Deploy FRONTEND (prod)
 
@@ -37,6 +40,7 @@ jobs:
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
           VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          VITE_GEMINI_MODEL: gemini-2.5-flash
           VITE_MAX_IMAGEN_MB: '10'
         run: npm run build
 

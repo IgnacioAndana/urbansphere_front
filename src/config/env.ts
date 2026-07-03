@@ -7,6 +7,11 @@ export const API_BASE_URL =
 /** API Key de Google Gemini (opcional). Solo para redactar descripciones en el admin. */
 export const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY?.trim() || ''
 
+/** Modelo Gemini para generateContent. gemini-1.5-flash fue retirado; usar 2.5+ */
+const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash'
+export const GEMINI_MODEL =
+  import.meta.env.VITE_GEMINI_MODEL?.trim() || DEFAULT_GEMINI_MODEL
+
 export function tieneGeminiConfigurada(): boolean {
   return GEMINI_API_KEY.length > 0
 }

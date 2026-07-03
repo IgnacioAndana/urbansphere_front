@@ -4,7 +4,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { proyectosService } from '../services/proyectos'
 import type { CrearProyectoDto, TipoProyecto } from '../types/proyectos'
 import { obtenerMensajeError } from '../utils/apiError'
-import { GEMINI_API_KEY, tieneGeminiConfigurada } from '../config/env'
+import { GEMINI_API_KEY, GEMINI_MODEL, tieneGeminiConfigurada } from '../config/env'
 import { validarFechaEntrega } from '../utils/validacionesProyecto'
 import { normalizarTipoProyecto } from '../utils/catalogoProyecto'
 
@@ -97,7 +97,7 @@ export function useProyectoForm() {
     generandoIa.value = true
     try {
       const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+      const model = genAI.getGenerativeModel({ model: GEMINI_MODEL })
       let prompt = `Redacta una descripción comercial atractiva (2-3 párrafos cortos) para un proyecto inmobiliario en Chile.\n`
       prompt += `Título: ${titulo.value.trim()}\nComuna: ${comuna.value.trim()}`
       if (direccion.value.trim()) prompt += `\nDirección: ${direccion.value.trim()}`
