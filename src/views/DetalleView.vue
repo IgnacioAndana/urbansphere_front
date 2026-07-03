@@ -16,6 +16,7 @@ import {
   formatearTipoProyecto,
 } from '../utils/catalogoProyecto'
 import { useValorUf } from '../composables/useValorUf'
+import { formatearFechaLegible } from '../utils/fechas'
 import { ordenarImagenes } from '../utils/imagenesGaleria'
 import { EQUIPAMIENTO_OPCIONES } from '../types/proyectos'
 import { useFavoritos } from '../composables/useFavoritos'
@@ -36,6 +37,8 @@ const { valorUf, fechaUf, ufEsFallback, cargandoUf, cargarValorUf } = useValorUf
 const precioDesdeClp = computed(() =>
   clpDesdeUf(detalle.value?.catalogo.precioDesdeUf ?? null, valorUf.value),
 )
+
+const fechaUfLegible = computed(() => formatearFechaLegible(fechaUf.value))
 
 const imagenesOrdenadas = computed(() =>
   detalle.value ? ordenarImagenes(detalle.value.imagenes) : [],
@@ -229,7 +232,7 @@ watch(proyectoId, cargar)
               </p>
               <p v-if="valorUf && !cargandoUf" class="text-[10px] text-slate-400 mt-1">
                 UF del día: ${{ valorUf.toLocaleString('es-CL') }}
-                <span v-if="fechaUf"> ({{ fechaUf }})</span>
+                <span v-if="fechaUfLegible"> ({{ fechaUfLegible }})</span>
                 <span v-if="ufEsFallback"> · valor referencial</span>
               </p>
               <div v-if="puedeUsarFavoritos" class="flex justify-start md:justify-end mt-4">
