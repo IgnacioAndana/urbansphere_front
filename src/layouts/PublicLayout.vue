@@ -74,10 +74,10 @@ const manejarCerrarSesion = async () => {
             <router-link
               v-if="!accesoAdmin"
               to="/perfil/datos"
-              title="Mi perfil"
+              title="Panel Cuenta"
               class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-[#003399] transition-all"
             >
-              <User class="w-4 h-4" /> Mi Perfil
+              <User class="w-4 h-4" /> Panel Cuenta
             </router-link>
             
             <router-link v-if="accesoAdmin" to="/admin/nuevo-proyecto" class="flex items-center gap-2 bg-gradient-to-r from-slate-900 to-slate-800 text-white px-4 py-2 rounded-xl text-sm font-bold hover:from-[#003399] hover:to-blue-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
@@ -137,7 +137,7 @@ const manejarCerrarSesion = async () => {
             class="flex items-center justify-center gap-2 w-full text-sm font-bold text-slate-700 hover:bg-blue-50 hover:text-[#003399] p-3 rounded-xl transition-colors"
             @click="menuAbierto = false"
           >
-            <User class="w-5 h-5" /> Mi perfil
+            <User class="w-5 h-5" /> Panel Cuenta
           </router-link>
 
           <router-link

@@ -249,6 +249,20 @@ watch(proyectoId, cargar)
             </div>
           </div>
 
+          <!-- Equipamiento (visible antes de la galería) -->
+          <div v-if="equipamientoActivo.length" class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 class="text-sm font-black text-slate-900 mb-3 uppercase tracking-wide">Equipamiento</h3>
+            <div class="flex flex-wrap gap-2">
+              <span
+                v-for="item in equipamientoActivo"
+                :key="item.key"
+                class="text-xs font-bold bg-blue-50 text-[#003399] px-3 py-1.5 rounded-full"
+              >
+                {{ item.label }}
+              </span>
+            </div>
+          </div>
+
           <!-- Galería del proyecto -->
           <div class="rounded-3xl overflow-hidden border border-slate-200 shadow-sm bg-white">
             <img
@@ -342,19 +356,6 @@ watch(proyectoId, cargar)
                 </div>
               </template>
               <p v-else class="text-sm text-slate-400 py-4">Esta tipología aún no tiene imágenes.</p>
-            </div>
-          </div>
-
-          <div v-if="equipamientoActivo.length" class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
-            <h3 class="text-xl font-black text-slate-900 mb-4">Equipamiento</h3>
-            <div class="flex flex-wrap gap-2">
-              <span
-                v-for="item in equipamientoActivo"
-                :key="item.key"
-                class="text-xs font-bold bg-blue-50 text-[#003399] px-3 py-1.5 rounded-full"
-              >
-                {{ item.label }}
-              </span>
             </div>
           </div>
         </div>
