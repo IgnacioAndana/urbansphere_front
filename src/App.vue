@@ -1,5 +1,10 @@
+<script setup lang="ts">
+import ChatbotWidget from './components/ChatbotWidget.vue'
+</script>
+
 <template>
   <router-view />
+  <ChatbotWidget />
 </template>
 
 <style>
