@@ -17,19 +17,35 @@ export interface ProyectoDetallePublico {
 }
 
 export const catalogoService = {
-  async listarActivos(): Promise<ProyectoCatalogoItem[]> {
-    const proyectos = await proyectosService.listar()
-    const activos = proyectos.filter((p) => p.estado === 'activo')
+  /** Cache en memoria para no repetir ~20 peticiones al volver al catálogo en la misma sesión. */
+  _cacheActivos: null as { data: ProyectoCatalogoItem[]; ts: number } | null,
+  _cacheTtlMs: 5 * 60 * 1000,
 
-    return Promise.all(
-      activos.map(async (proyecto) => {
-        const [tipologias, imagenes] = await Promise.all([
-          tipologiasService.listar(proyecto.id).catch(() => [] as Tipologia[]),
-          imagenesProyectoService.listar(proyecto.id).catch(() => [] as ProyectoImagen[]),
-        ])
-        return mapProyectoCatalogo(proyecto, tipologias, imagenes)
-      }),
-    )
+  invalidarCacheActivos() {
+    this._cacheActivos = null
+  },
+
+  async listarActivos(opciones?: { forzarRecarga?: boolean }): Promise<ProyectoCatalogoItem[]> {
+    const cache = this._cacheActivos
+    if (
+      !opciones?.forzarRecarga &&
+      cache &&
+      Date.now() - cache.ts < this._cacheTtlMs
+    ) {
+      return cache.data
+    }
+
+    const proyectos = await proyectosService.listar()
+    const ids = proyectos.filter((p) => p.estado === 'activo').map((p) => p.id)
+
+    if (!ids.length) {
+      this._cacheActivos = { data: [], ts: Date.now() }
+      return []
+    }
+
+    const { items } = await proyectosService.consultarCatalogo(ids)
+    this._cacheActivos = { data: items, ts: Date.now() }
+    return items
   },
 
   /** Favoritos del usuario autenticado, ordenados por fecha de agregado (MS Usuarios + batch catálogo). */

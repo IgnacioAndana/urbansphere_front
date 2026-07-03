@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick, watch, computed } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, watch, computed, shallowRef } from 'vue'
 import { MapPin, X } from 'lucide-vue-next'
 import PublicLayout from '../layouts/PublicLayout.vue'
-import 'leaflet/dist/leaflet.css'
-import L from 'leaflet'
 import { configurarIconosLeaflet } from '../utils/leafletSetup'
 import { catalogoService } from '../services/proyectos'
 import { obtenerMensajeError } from '../utils/apiError'
@@ -16,13 +14,14 @@ import {
 } from '../utils/catalogoProyecto'
 import { useFavoritos } from '../composables/useFavoritos'
 import ProyectoCatalogoCard from '../components/catalogo/ProyectoCatalogoCard.vue'
-
-configurarIconosLeaflet()
+import type { Map as LeafletMap, LayerGroup } from 'leaflet'
+import type Leaflet from 'leaflet'
 
 const mapContainer = ref<HTMLElement | null>(null)
 const vistaMobile = ref<'lista' | 'mapa'>('lista')
 
-const proyectosRaw = ref<ProyectoCatalogoItem[]>([])
+/** shallowRef: lista grande sin deep reactivity innecesaria */
+const proyectosRaw = shallowRef<ProyectoCatalogoItem[]>([])
 const cargando = ref(true)
 const errorMsg = ref('')
 
@@ -68,11 +67,25 @@ function limpiarFiltros() {
   precioMax.value = null
 }
 
-let leafletMap: L.Map | undefined
-let markersLayer: L.LayerGroup | undefined
+let leafletMap: LeafletMap | undefined
+let markersLayer: LayerGroup | undefined
+let leafletLib: typeof Leaflet | null = null
+let mapaInicializando = false
+let timerPines: ReturnType<typeof setTimeout> | undefined
+
+async function obtenerLeaflet(): Promise<typeof Leaflet> {
+  if (!leafletLib) {
+    await import('leaflet/dist/leaflet.css')
+    const mod = await import('leaflet')
+    leafletLib = mod.default
+    configurarIconosLeaflet()
+  }
+  return leafletLib
+}
 
 function renderizarPines(lista: ProyectoCatalogoItem[]) {
-  if (!markersLayer) return
+  if (!markersLayer || !leafletLib) return
+  const L = leafletLib
   markersLayer.clearLayers()
 
   lista.forEach((prop) => {
@@ -105,28 +118,47 @@ function renderizarPines(lista: ProyectoCatalogoItem[]) {
   })
 }
 
-function initMap() {
-  if (!mapContainer.value || leafletMap) return
+function programarPines(lista: ProyectoCatalogoItem[]) {
+  if (timerPines) clearTimeout(timerPines)
+  timerPines = setTimeout(() => renderizarPines(lista), 250)
+}
 
-  leafletMap = L.map(mapContainer.value, { zoomControl: false }).setView([-33.41, -70.58], 11)
-  L.control.zoom({ position: 'bottomright' }).addTo(leafletMap)
+async function initMap() {
+  if (!mapContainer.value || leafletMap || mapaInicializando) return
+  mapaInicializando = true
+  try {
+    const L = await obtenerLeaflet()
+    leafletMap = L.map(mapContainer.value, { zoomControl: false }).setView([-33.41, -70.58], 11)
+    L.control.zoom({ position: 'bottomright' }).addTo(leafletMap)
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; OpenStreetMap contributors',
-    maxZoom: 19,
-  }).addTo(leafletMap)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(leafletMap)
 
-  markersLayer = L.layerGroup().addTo(leafletMap)
-  renderizarPines(proyectos.value)
+    markersLayer = L.layerGroup().addTo(leafletMap)
+    renderizarPines(proyectos.value)
+  } finally {
+    mapaInicializando = false
+  }
 }
 
 async function asegurarMapa() {
   await nextTick()
-  initMap()
+  await initMap()
   leafletMap?.invalidateSize()
 }
 
-watch(proyectos, (lista) => renderizarPines(lista))
+function diferirMapaDesktop() {
+  if (!window.matchMedia('(min-width: 768px)').matches) return
+  requestAnimationFrame(() => {
+    void asegurarMapa()
+  })
+}
+
+watch(proyectos, (lista) => {
+  if (leafletMap) programarPines(lista)
+})
 
 watch(vistaMobile, async (vista) => {
   if (vista === 'mapa') await asegurarMapa()
@@ -136,19 +168,27 @@ async function cargarCatalogo() {
   cargando.value = true
   errorMsg.value = ''
   try {
-    proyectosRaw.value = await catalogoService.listarActivos()
-    await cargarFavoritos()
+    const [items] = await Promise.all([
+      catalogoService.listarActivos(),
+      cargarFavoritos(),
+    ])
+    proyectosRaw.value = items
   } catch (error) {
     errorMsg.value = obtenerMensajeError(error, 'No se pudo cargar el catálogo.')
   } finally {
     cargando.value = false
-    if (window.matchMedia('(min-width: 768px)').matches) {
-      await asegurarMapa()
-    }
+    diferirMapaDesktop()
   }
 }
 
 onMounted(cargarCatalogo)
+
+onUnmounted(() => {
+  if (timerPines) clearTimeout(timerPines)
+  leafletMap?.remove()
+  leafletMap = undefined
+  markersLayer = undefined
+})
 
 async function toggleFavorito(id: number | string) {
   await alternarFavorito(Number(id))
