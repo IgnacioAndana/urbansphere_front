@@ -10,9 +10,11 @@ import {
   filtrarProyectosCatalogo,
   formatearPrecioUf,
   formatearTipoProyecto,
+  ufDesdeClp,
   type ProyectoCatalogoItem,
 } from '../utils/catalogoProyecto'
 import { useFavoritos } from '../composables/useFavoritos'
+import { useValorUf } from '../composables/useValorUf'
 import ProyectoCatalogoCard from '../components/catalogo/ProyectoCatalogoCard.vue'
 import type { Map as LeafletMap, LayerGroup } from 'leaflet'
 import type Leaflet from 'leaflet'
@@ -30,8 +32,20 @@ const filtroComuna = ref('Todas')
 const filtroTipo = ref('Todos')
 const precioMin = ref<number | null>(null)
 const precioMax = ref<number | null>(null)
+const filtroMoneda = ref<'uf' | 'clp'>('uf')
 
 const { puedeUsarFavoritos, esFavorito, cargarFavoritos, alternarFavorito } = useFavoritos()
+const { valorUf, cargandoUf, cargarValorUf } = useValorUf()
+
+function precioInputAUf(valor: number | null): number | null {
+  if (valor == null || Number.isNaN(valor)) return null
+  if (filtroMoneda.value === 'uf') return valor
+  if (!valorUf.value) return null
+  return ufDesdeClp(valor, valorUf.value)
+}
+
+const precioMinUf = computed(() => precioInputAUf(precioMin.value))
+const precioMaxUf = computed(() => precioInputAUf(precioMax.value))
 
 const comunas = computed(() => ['Todas', ...extraerComunas(proyectosRaw.value)])
 
@@ -40,8 +54,8 @@ const proyectos = computed(() =>
     texto: filtroTexto.value,
     comuna: filtroComuna.value,
     tipo: filtroTipo.value,
-    precioMin: precioMin.value,
-    precioMax: precioMax.value,
+    precioMin: precioMinUf.value,
+    precioMax: precioMaxUf.value,
   }),
 )
 
@@ -66,6 +80,11 @@ function limpiarFiltros() {
   precioMin.value = null
   precioMax.value = null
 }
+
+watch(filtroMoneda, () => {
+  precioMin.value = null
+  precioMax.value = null
+})
 
 let leafletMap: LeafletMap | undefined
 let markersLayer: LayerGroup | undefined
@@ -181,7 +200,10 @@ async function cargarCatalogo() {
   }
 }
 
-onMounted(cargarCatalogo)
+onMounted(() => {
+  void cargarValorUf()
+  void cargarCatalogo()
+})
 
 onUnmounted(() => {
   if (timerPines) clearTimeout(timerPines)
@@ -250,23 +272,49 @@ async function toggleFavorito(id: number | string) {
                 <option v-for="c in comunas" :key="c" :value="c">{{ c === 'Todas' ? 'Todas las comunas' : c }}</option>
               </select>
             </div>
-            <div class="flex flex-col sm:flex-row gap-2">
-              <input
-                v-model.number="precioMin"
-                type="number"
-                min="0"
-                step="100"
-                placeholder="UF mín."
-                class="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-600 bg-white min-w-0"
-              />
-              <input
-                v-model.number="precioMax"
-                type="number"
-                min="0"
-                step="100"
-                placeholder="UF máx."
-                class="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-600 bg-white min-w-0"
-              />
+            <div class="flex flex-col gap-2">
+              <div class="flex rounded-lg border border-slate-200 p-0.5 bg-slate-50">
+                <button
+                  type="button"
+                  class="flex-1 py-1.5 text-xs font-bold rounded-md transition-colors"
+                  :class="filtroMoneda === 'uf' ? 'bg-white text-[#003399] shadow-sm' : 'text-slate-500'"
+                  @click="filtroMoneda = 'uf'"
+                >
+                  Filtrar en UF
+                </button>
+                <button
+                  type="button"
+                  class="flex-1 py-1.5 text-xs font-bold rounded-md transition-colors"
+                  :class="filtroMoneda === 'clp' ? 'bg-white text-[#003399] shadow-sm' : 'text-slate-500'"
+                  @click="filtroMoneda = 'clp'"
+                >
+                  Filtrar en $
+                </button>
+              </div>
+              <div class="flex flex-col sm:flex-row gap-2">
+                <input
+                  v-model.number="precioMin"
+                  type="number"
+                  min="0"
+                  :step="filtroMoneda === 'uf' ? 100 : 500000"
+                  :placeholder="filtroMoneda === 'uf' ? 'UF mín.' : '$ mín.'"
+                  class="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-600 bg-white min-w-0"
+                />
+                <input
+                  v-model.number="precioMax"
+                  type="number"
+                  min="0"
+                  :step="filtroMoneda === 'uf' ? 100 : 500000"
+                  :placeholder="filtroMoneda === 'uf' ? 'UF máx.' : '$ máx.'"
+                  class="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-600 bg-white min-w-0"
+                />
+              </div>
+              <p v-if="filtroMoneda === 'clp' && valorUf" class="text-[10px] text-slate-400">
+                Conversión referencial: 1 UF = ${{ valorUf.toLocaleString('es-CL') }}
+              </p>
+              <p v-else-if="filtroMoneda === 'clp' && cargandoUf" class="text-[10px] text-slate-400">
+                Cargando valor UF para filtrar en pesos...
+              </p>
             </div>
             <button
               v-if="hayFiltrosActivos"

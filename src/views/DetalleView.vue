@@ -10,9 +10,12 @@ import type { TipologiaImagen } from '../types/proyectos'
 import { obtenerMensajeError } from '../utils/apiError'
 import {
   formatearPrecioUf,
+  formatearPrecioClp,
+  clpDesdeUf,
   formatearRango,
   formatearTipoProyecto,
 } from '../utils/catalogoProyecto'
+import { useValorUf } from '../composables/useValorUf'
 import { ordenarImagenes } from '../utils/imagenesGaleria'
 import { EQUIPAMIENTO_OPCIONES } from '../types/proyectos'
 import { useFavoritos } from '../composables/useFavoritos'
@@ -28,6 +31,11 @@ const cargando = ref(true)
 const errorMsg = ref('')
 
 const { puedeUsarFavoritos, esFavorito, cargarFavoritos, alternarFavorito } = useFavoritos()
+const { valorUf, fechaUf, ufEsFallback, cargandoUf, cargarValorUf } = useValorUf()
+
+const precioDesdeClp = computed(() =>
+  clpDesdeUf(detalle.value?.catalogo.precioDesdeUf ?? null, valorUf.value),
+)
 
 const imagenesOrdenadas = computed(() =>
   detalle.value ? ordenarImagenes(detalle.value.imagenes) : [],
@@ -173,7 +181,10 @@ async function cargar() {
   }
 }
 
-onMounted(cargar)
+onMounted(() => {
+  void cargarValorUf()
+  void cargar()
+})
 watch(proyectoId, cargar)
 </script>
 
@@ -213,6 +224,14 @@ watch(proyectoId, cargar)
             <div class="text-left md:text-right">
               <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Precio desde</p>
               <p class="text-4xl font-black text-[#003399]">{{ formatearPrecioUf(detalle.catalogo.precioDesdeUf) }}</p>
+              <p v-if="precioDesdeClp" class="text-sm font-semibold text-slate-500 mt-1">
+                {{ formatearPrecioClp(precioDesdeClp) }}
+              </p>
+              <p v-if="valorUf && !cargandoUf" class="text-[10px] text-slate-400 mt-1">
+                UF del día: ${{ valorUf.toLocaleString('es-CL') }}
+                <span v-if="fechaUf"> ({{ fechaUf }})</span>
+                <span v-if="ufEsFallback"> · valor referencial</span>
+              </p>
               <div v-if="puedeUsarFavoritos" class="flex justify-start md:justify-end mt-4">
                 <button
                   type="button"
@@ -309,7 +328,8 @@ watch(proyectoId, cargar)
                     <th class="pb-2 pr-4">Dorms.</th>
                     <th class="pb-2 pr-4">Baños</th>
                     <th class="pb-2 pr-4">m²</th>
-                    <th class="pb-2">UF</th>
+                    <th class="pb-2 pr-4">UF</th>
+                    <th class="pb-2">Aprox. $</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -326,7 +346,10 @@ watch(proyectoId, cargar)
                     <td class="py-3 pr-4">{{ t.dormitorios }}</td>
                     <td class="py-3 pr-4">{{ t.banos }}</td>
                     <td class="py-3 pr-4">{{ t.superficieM2 }}</td>
-                    <td class="py-3 font-bold text-[#003399]">{{ formatearPrecioUf(t.valorEnUf) }}</td>
+                    <td class="py-3 pr-4 font-bold text-[#003399]">{{ formatearPrecioUf(t.valorEnUf) }}</td>
+                    <td class="py-3 text-slate-600 text-xs">
+                      {{ formatearPrecioClp(clpDesdeUf(t.valorEnUf, valorUf)) || '—' }}
+                    </td>
                   </tr>
                 </tbody>
               </table>

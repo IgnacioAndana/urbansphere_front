@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Building2, Users, LogOut, Home, LayoutGrid, Menu, X, User, ChevronDown, List, FolderPlus } from 'lucide-vue-next'
+import { Building2, Users, LogOut, Home, LayoutGrid, Menu, X, User, ChevronDown, List, FolderPlus, Inbox } from 'lucide-vue-next'
 import imagotipoUrl from '../assets/UrbanSphere-Imagotipo.png'
 import { useSesion } from '../composables/useSesion'
 import { nombreRolPorId } from '../constants/roles'
@@ -12,7 +12,7 @@ defineProps<{
 
 const router = useRouter()
 const route = useRoute()
-const { nombre, rolId, puedeVerUsuarios, cargarSesion, cerrarSesion } = useSesion()
+const { nombre, rolId, puedeVerUsuarios, accesoAdmin, cargarSesion, cerrarSesion } = useSesion()
 
 const nombreUsuario = ref('Administrador')
 const rolUsuario = ref('Admin')
@@ -111,6 +111,10 @@ const manejarCerrarSesion = async () => {
             </router-link>
           </div>
         </div>
+
+        <router-link v-if="accesoAdmin" to="/admin/solicitudes" class="flex items-center gap-3 px-3 py-3 hover:bg-slate-50 rounded-lg font-medium text-sm transition-colors text-slate-600" active-class="bg-[#003399]/10 text-[#003399] font-bold hover:bg-[#003399]/10">
+          <Inbox class="w-4 h-4" /> Solicitudes
+        </router-link>
 
         <router-link v-if="puedeVerUsuarios" to="/admin/usuarios" class="flex items-center gap-3 px-3 py-3 hover:bg-slate-50 rounded-lg font-medium text-sm transition-colors text-slate-600" active-class="bg-[#003399]/10 text-[#003399] font-bold hover:bg-[#003399]/10">
           <Users class="w-4 h-4" /> Usuarios

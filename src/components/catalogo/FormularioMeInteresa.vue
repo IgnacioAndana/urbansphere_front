@@ -1,15 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { Heart, LogIn } from 'lucide-vue-next'
-import {
-  authService,
-  solicitudesInteresService,
-  solicitudesContactoService,
-} from '../../services/usuarios'
+import { authService, solicitudesInteresService } from '../../services/usuarios'
 import { esUsuarioEstandar } from '../../constants/roles'
 import { obtenerMensajeError } from '../../utils/apiError'
-import { mensajeInteresDefault } from '../../utils/catalogoProyecto'
 import { queryLoginDesde } from '../../utils/authRedirect'
 import { aEnteroPositivo } from '../../utils/numeros'
 
@@ -24,7 +19,6 @@ const route = useRoute()
 
 const nombre = ref('')
 const email = ref('')
-const mensaje = ref('')
 const enviando = ref(false)
 const exito = ref(false)
 const errorMsg = ref('')
@@ -40,7 +34,6 @@ const loginUrl = computed(() => ({
 }))
 
 function precargarDatos() {
-  mensaje.value = mensajeInteresDefault(props.tituloProyecto)
   if (!autenticado.value) return
   const local = authService.obtenerUsuarioLocal()
   nombre.value = local?.nombre ?? ''
@@ -48,7 +41,6 @@ function precargarDatos() {
 }
 
 onMounted(precargarDatos)
-watch(() => props.tituloProyecto, precargarDatos)
 
 async function enviar() {
   errorMsg.value = ''
@@ -60,19 +52,7 @@ async function enviar() {
   try {
     await solicitudesInteresService.enviar({
       proyectoId: proyectoIdNumerico.value,
-      nombre: nombre.value.trim(),
-      email: email.value.trim(),
     })
-
-    const texto = mensaje.value.trim()
-    if (texto) {
-      await solicitudesContactoService.enviar({
-        nombreCompleto: nombre.value.trim(),
-        email: email.value.trim(),
-        mensaje: `Consulta sobre proyecto "${props.tituloProyecto}" (ID ${proyectoIdNumerico.value}):\n\n${texto}`,
-      })
-    }
-
     exito.value = true
   } catch (error) {
     errorMsg.value = obtenerMensajeError(error, 'No se pudo enviar tu solicitud.')
@@ -85,7 +65,9 @@ async function enviar() {
 <template>
   <div v-if="mostrarFormulario" class="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl sticky top-28">
     <h3 class="text-xl font-black text-slate-900 leading-tight mb-1">Me interesa este proyecto</h3>
-    <p class="text-xs text-slate-500 mb-6">Un agente de UrbanSphere revisará tu solicitud y te contactará.</p>
+    <p class="text-xs text-slate-500 mb-6">
+      Enviaremos tu solicitud sobre <strong>{{ tituloProyecto }}</strong>. Un agente te contactará usando los datos de tu cuenta.
+    </p>
 
     <div v-if="exito" class="bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-xl text-sm">
       ¡Solicitud enviada! Revisa tu correo; pronto te contactaremos.
@@ -119,14 +101,6 @@ async function enviar() {
         />
       </div>
       <p class="text-[11px] text-slate-400 -mt-1">Estos datos provienen de tu cuenta y no se pueden modificar aquí.</p>
-      <div>
-        <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Mensaje</label>
-        <textarea
-          v-model="mensaje"
-          rows="4"
-          class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:border-[#003399] bg-slate-50 focus:bg-white resize-none"
-        />
-      </div>
       <button
         type="submit"
         :disabled="enviando"

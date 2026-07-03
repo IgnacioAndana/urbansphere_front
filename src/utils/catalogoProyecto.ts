@@ -78,6 +78,23 @@ export function formatearPrecioUf(uf: number | null): string {
   return `UF ${uf.toLocaleString('es-CL')}`
 }
 
+/** Convierte UF a pesos chilenos con el valor UF del día. */
+export function clpDesdeUf(uf: number | null, valorUf: number | null): number | null {
+  if (uf == null || valorUf == null || valorUf <= 0) return null
+  return Math.round(uf * valorUf)
+}
+
+export function ufDesdeClp(clp: number, valorUf: number): number | null {
+  if (!Number.isFinite(clp) || clp <= 0 || valorUf <= 0) return null
+  return clp / valorUf
+}
+
+export function formatearPrecioClp(clp: number | null, opciones?: { aproximado?: boolean }): string {
+  if (clp == null) return ''
+  const prefijo = opciones?.aproximado !== false ? '≈ ' : ''
+  return `${prefijo}$${clp.toLocaleString('es-CL')}`
+}
+
 export function normalizarTipoProyecto(valor: unknown): TipoProyecto {
   const t = String(valor ?? '').toLowerCase()
   return t === 'casa' ? 'casa' : 'departamento'

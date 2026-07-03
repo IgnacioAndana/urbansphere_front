@@ -105,16 +105,26 @@ export interface ActualizarPerfilPropioDto {
 
 // --- Solicitudes de interés ---
 
+export type EstadoSolicitud = 'pendiente' | 'resuelta'
+
 export interface SolicitudInteresDto {
+  proyectoId: number
+}
+
+export interface SolicitudInteres {
+  id: number
   proyectoId: number
   nombre: string
   email: string
+  usuarioId?: number | null
+  estado?: EstadoSolicitud
+  observacionAgente?: string | null
+  creadoEn?: string
 }
 
-export interface SolicitudInteres extends SolicitudInteresDto {
-  id: number
-  usuarioId?: number | null
-  creadoEn?: string
+export interface GestionSolicitudDto {
+  estado: EstadoSolicitud
+  observacionAgente?: string | null
 }
 
 export interface SolicitudContactoDto {
@@ -125,6 +135,8 @@ export interface SolicitudContactoDto {
 
 export interface SolicitudContacto extends SolicitudContactoDto {
   id: number
+  estado?: EstadoSolicitud
+  observacionAgente?: string | null
   creadoEn?: string
 }
 

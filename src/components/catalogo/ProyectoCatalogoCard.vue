@@ -1,14 +1,18 @@
 <script setup lang="ts">
+import { computed, onMounted } from 'vue'
 import { MapPin, Bed, Bath, Maximize, Heart } from 'lucide-vue-next'
 import {
   formatearPrecioUf,
+  formatearPrecioClp,
+  clpDesdeUf,
   formatearRango,
   formatearTipoProyecto,
   type ProyectoCatalogoItem,
 } from '../../utils/catalogoProyecto'
+import { useValorUf } from '../../composables/useValorUf'
 import isotipoUrl from '../../assets/UrbanSphere-Isotipo.png'
 
-defineProps<{
+const props = defineProps<{
   prop: ProyectoCatalogoItem
   esFavorito?: boolean
   mostrarFavorito?: boolean
@@ -17,6 +21,14 @@ defineProps<{
 const emit = defineEmits<{
   toggleFavorito: [id: number]
 }>()
+
+const { valorUf, cargarValorUf } = useValorUf()
+
+const precioClp = computed(() => clpDesdeUf(props.prop.precioDesdeUf, valorUf.value))
+
+onMounted(() => {
+  void cargarValorUf()
+})
 </script>
 
 <template>
@@ -41,6 +53,7 @@ const emit = defineEmits<{
     <div class="w-full sm:w-3/5 p-4 flex flex-col justify-between min-w-0">
       <div>
         <h3 class="font-black text-xl sm:text-2xl text-slate-900">{{ formatearPrecioUf(prop.precioDesdeUf) }}</h3>
+        <p v-if="precioClp" class="text-xs font-semibold text-slate-500 mt-0.5">{{ formatearPrecioClp(precioClp) }}</p>
         <p class="text-[10px] text-slate-400 mt-0.5 uppercase tracking-wide font-bold">
           Desde · {{ formatearTipoProyecto(prop.tipo) }}
         </p>

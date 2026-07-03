@@ -25,3 +25,12 @@ export const MAX_IMAGEN_MB = (() => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_MAX_IMAGEN_MB
 })()
 export const MAX_IMAGEN_BYTES = MAX_IMAGEN_MB * 1024 * 1024
+
+/** Valor UF en CLP si mindicador.cl no responde (referencial). */
+const DEFAULT_UF_VALOR_CLP = 39_000
+export const UF_VALOR_CLP_FALLBACK = (() => {
+  const raw = import.meta.env.VITE_UF_VALOR_CLP
+  if (raw == null || String(raw).trim() === '') return DEFAULT_UF_VALOR_CLP
+  const parsed = Number(raw)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_UF_VALOR_CLP
+})()
