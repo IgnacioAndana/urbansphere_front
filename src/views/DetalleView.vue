@@ -1,145 +1,224 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router';
-import { MapPin, Bed, Bath, Maximize, Calendar, ShieldCheck, ChevronRight, Share2, Heart } from 'lucide-vue-next';
-import PublicLayout from '../layouts/PublicLayout.vue';
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { MapPin, Bed, Bath, Maximize, Calendar, ChevronRight, Heart } from 'lucide-vue-next'
+import PublicLayout from '../layouts/PublicLayout.vue'
+import FormularioMeInteresa from '../components/catalogo/FormularioMeInteresa.vue'
+import { catalogoService } from '../services/proyectos'
+import type { ProyectoDetallePublico } from '../services/proyectos/catalogoService'
+import { obtenerMensajeError } from '../utils/apiError'
+import {
+  formatearPrecioUf,
+  formatearRango,
+  obtenerUrlPortada,
+} from '../utils/catalogoProyecto'
+import { ordenarImagenes } from '../utils/imagenesGaleria'
+import { EQUIPAMIENTO_OPCIONES } from '../types/proyectos'
+import { useFavoritos } from '../composables/useFavoritos'
+import { authService } from '../services/usuarios'
+import { esUsuarioEstandar } from '../constants/roles'
+import isotipoUrl from '../assets/UrbanSphere-Isotipo.png'
 
-const route = useRoute();
-const propiedadId = route.params.id; // Captura el ID de la URL (ej: /propiedad/1)
+const route = useRoute()
+const proyectoId = computed(() => Number(route.params.id))
+
+const detalle = ref<ProyectoDetallePublico | null>(null)
+const cargando = ref(true)
+const errorMsg = ref('')
+
+const { puedeUsarFavoritos, esFavorito, cargarFavoritos, alternarFavorito } = useFavoritos()
+
+const imagenesOrdenadas = computed(() =>
+  detalle.value ? ordenarImagenes(detalle.value.imagenes) : [],
+)
+
+const imagenPrincipal = computed(() => {
+  if (!detalle.value) return null
+  return obtenerUrlPortada(detalle.value.imagenes)
+})
+
+const equipamientoActivo = computed(() => {
+  if (!detalle.value?.equipamiento) return []
+  const eq = detalle.value.equipamiento
+  return EQUIPAMIENTO_OPCIONES.filter((op) => eq[op.key])
+})
+
+const anioEntrega = computed(() => {
+  const fecha = detalle.value?.proyecto.fechaEntregaEstimada
+  if (!fecha) return '—'
+  const anio = new Date(fecha).getFullYear()
+  return Number.isNaN(anio) ? '—' : String(anio)
+})
+
+const mostrarSidebarInteres = computed(() => {
+  if (!authService.estaAutenticado()) return true
+  return esUsuarioEstandar(authService.obtenerRolIdLocal())
+})
+
+async function cargar() {
+  if (Number.isNaN(proyectoId.value)) {
+    errorMsg.value = 'Proyecto no válido.'
+    cargando.value = false
+    return
+  }
+  cargando.value = true
+  errorMsg.value = ''
+  try {
+    detalle.value = await catalogoService.obtenerDetalle(proyectoId.value)
+    if (!detalle.value) {
+      errorMsg.value = 'Proyecto no encontrado o no disponible.'
+    }
+    await cargarFavoritos()
+  } catch (error) {
+    errorMsg.value = obtenerMensajeError(error, 'No se pudo cargar el proyecto.')
+  } finally {
+    cargando.value = false
+  }
+}
+
+onMounted(cargar)
+watch(proyectoId, cargar)
 </script>
 
 <template>
   <PublicLayout>
-    <!-- Breadcrumb (Migas de pan) -->
     <div class="bg-white border-b border-slate-200">
       <div class="max-w-7xl mx-auto px-6 py-4 flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
         <router-link to="/catalogo" class="hover:text-[#003399] transition-colors">Catálogo</router-link>
         <ChevronRight class="w-4 h-4" />
-        <span class="text-slate-400">Propiedad ID {{ propiedadId }}</span>
+        <span class="text-slate-400 truncate">{{ detalle?.proyecto.titulo ?? 'Detalle' }}</span>
       </div>
     </div>
 
-    <div class="bg-slate-50 min-h-[calc(100vh-130px)]">
+    <div v-if="cargando" class="py-24 text-center text-slate-400">Cargando proyecto...</div>
+    <div v-else-if="errorMsg || !detalle" class="py-24 text-center">
+      <p class="text-red-600 font-medium">{{ errorMsg || 'Proyecto no disponible.' }}</p>
+      <router-link to="/catalogo" class="inline-block mt-4 text-[#003399] font-bold text-sm">Volver al catálogo</router-link>
+    </div>
+
+    <div v-else class="bg-slate-50 min-h-[calc(100vh-130px)]">
       <div class="max-w-7xl mx-auto p-6 w-full grid grid-cols-1 lg:grid-cols-12 gap-8 py-8">
-        
-        <!-- Bloque Izquierdo: Ficha del Proyecto (8 Columnas) -->
-        <div class="lg:col-span-8 flex flex-col gap-8">
-          
-          <!-- Encabezado de la propiedad -->
+        <div :class="mostrarSidebarInteres ? 'lg:col-span-8' : 'lg:col-span-12'" class="flex flex-col gap-8">
           <div class="flex flex-col md:flex-row md:items-start justify-between gap-6">
             <div>
               <div class="flex items-center gap-3 mb-3">
-                <span class="text-xs bg-emerald-100 text-emerald-700 font-black px-3 py-1 rounded uppercase tracking-wide">En Venta</span>
-                <span class="text-xs bg-blue-100 text-[#003399] font-black px-3 py-1 rounded uppercase tracking-wide">Proyecto Residencial</span>
+                <span class="text-xs bg-emerald-100 text-emerald-700 font-black px-3 py-1 rounded uppercase">En venta</span>
+                <span class="text-xs bg-blue-100 text-[#003399] font-black px-3 py-1 rounded uppercase">Departamento</span>
               </div>
-              <h1 class="text-4xl font-black text-slate-900 leading-tight">Vista Parque Residencias</h1>
+              <h1 class="text-4xl font-black text-slate-900 leading-tight">{{ detalle.proyecto.titulo }}</h1>
               <p class="text-slate-500 font-medium mt-2 flex items-center gap-2">
-                <MapPin class="w-5 h-5 text-slate-400" /> Av. El Parque 1234, Providencia, Santiago
+                <MapPin class="w-5 h-5 text-slate-400" />
+                {{ detalle.proyecto.direccion }}, {{ detalle.proyecto.comuna }}
               </p>
             </div>
             <div class="text-left md:text-right">
-              <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Precio Desde</p>
-              <p class="text-4xl font-black text-[#003399]">UF 8.950</p>
-              <div class="flex items-center gap-2 justify-start md:justify-end mt-4">
-                <button class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 flex items-center justify-center transition-all shadow-sm">
-                  <Heart class="w-5 h-5" />
-                </button>
-                <button class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-[#003399] hover:border-blue-200 hover:bg-blue-50 flex items-center justify-center transition-all shadow-sm">
-                  <Share2 class="w-5 h-5" />
+              <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Precio desde</p>
+              <p class="text-4xl font-black text-[#003399]">{{ formatearPrecioUf(detalle.catalogo.precioDesdeUf) }}</p>
+              <div v-if="puedeUsarFavoritos" class="flex justify-start md:justify-end mt-4">
+                <button
+                  type="button"
+                  class="w-10 h-10 rounded-full bg-white border flex items-center justify-center transition-all shadow-sm"
+                  :class="esFavorito(detalle.proyecto.id) ? 'border-red-200 text-red-500 bg-red-50' : 'border-slate-200 text-slate-400 hover:text-red-500'"
+                  @click="alternarFavorito(detalle.proyecto.id)"
+                >
+                  <Heart class="w-5 h-5" :class="esFavorito(detalle.proyecto.id) ? 'fill-current' : ''" />
                 </button>
               </div>
             </div>
           </div>
 
-          <!-- Características Rápidas -->
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col items-center justify-center text-center shadow-sm">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col items-center text-center shadow-sm">
               <Bed class="w-6 h-6 text-[#003399] mb-2" />
-              <span class="font-black text-lg text-slate-900">2 - 3</span>
-              <span class="text-xs text-slate-500 uppercase font-bold tracking-wide">Dormitorios</span>
+              <span class="font-black text-lg">{{ formatearRango(detalle.catalogo.dormitoriosMin, detalle.catalogo.dormitoriosMax) }}</span>
+              <span class="text-xs text-slate-500 uppercase font-bold">Dormitorios</span>
             </div>
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col items-center justify-center text-center shadow-sm">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col items-center text-center shadow-sm">
               <Bath class="w-6 h-6 text-[#003399] mb-2" />
-              <span class="font-black text-lg text-slate-900">2</span>
-              <span class="text-xs text-slate-500 uppercase font-bold tracking-wide">Baños</span>
+              <span class="font-black text-lg">{{ formatearRango(detalle.catalogo.banosMin, detalle.catalogo.banosMax) }}</span>
+              <span class="text-xs text-slate-500 uppercase font-bold">Baños</span>
             </div>
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col items-center justify-center text-center shadow-sm">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col items-center text-center shadow-sm">
               <Maximize class="w-6 h-6 text-[#003399] mb-2" />
-              <span class="font-black text-lg text-slate-900">65 - 95</span>
-              <span class="text-xs text-slate-500 uppercase font-bold tracking-wide">m² Totales</span>
+              <span class="font-black text-lg">{{ formatearRango(detalle.catalogo.superficieMin, detalle.catalogo.superficieMax, ' m²') }}</span>
+              <span class="text-xs text-slate-500 uppercase font-bold">Superficie</span>
             </div>
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col items-center justify-center text-center shadow-sm">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col items-center text-center shadow-sm">
               <Calendar class="w-6 h-6 text-[#003399] mb-2" />
-              <span class="font-black text-lg text-slate-900">2026</span>
-              <span class="text-xs text-slate-500 uppercase font-bold tracking-wide">Entrega</span>
+              <span class="font-black text-lg">{{ anioEntrega }}</span>
+              <span class="text-xs text-slate-500 uppercase font-bold">Entrega</span>
             </div>
           </div>
 
-          <!-- Placeholder del Visor 360° -->
-          <div class="bg-slate-900 text-white h-[450px] rounded-3xl flex flex-col items-center justify-center p-6 text-center border border-slate-800 shadow-2xl relative overflow-hidden group cursor-pointer">
-            <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80')] bg-cover bg-center opacity-40 group-hover:scale-105 transition-transform duration-700"></div>
-            <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent"></div>
-            
-            <div class="relative z-10 flex flex-col items-center">
-              <div class="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mb-4 border border-white/30 group-hover:bg-[#003399]/80 transition-colors">
-                <span class="text-4xl">🔄</span>
-              </div>
-              <h2 class="text-2xl font-black mb-2">Visor Inmersivo 360°</h2>
-              <p class="text-slate-300 max-w-sm">Haz clic para iniciar el recorrido virtual interactivo por el departamento piloto.</p>
+          <div class="rounded-3xl overflow-hidden border border-slate-200 shadow-sm bg-white">
+            <img
+              v-if="imagenPrincipal"
+              :src="imagenPrincipal"
+              :alt="detalle.proyecto.titulo"
+              class="w-full h-[320px] sm:h-[420px] object-cover"
+            />
+            <div v-else class="h-[320px] flex items-center justify-center bg-slate-100">
+              <img :src="isotipoUrl" alt="" class="w-32 h-32 opacity-30 object-contain" />
+            </div>
+            <div v-if="imagenesOrdenadas.length > 1" class="p-4 flex gap-2 overflow-x-auto">
+              <img
+                v-for="img in imagenesOrdenadas"
+                :key="img.id"
+                :src="img.urlS3"
+                alt="Galería"
+                class="w-20 h-20 rounded-lg object-cover shrink-0 border border-slate-200"
+              />
             </div>
           </div>
 
-          <!-- Descripción -->
-          <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm mt-4">
+          <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
             <h3 class="text-2xl font-black text-slate-900 mb-4">Acerca de este proyecto</h3>
-            <p class="text-slate-600 leading-relaxed mb-4">
-              Condominio Vista Parque redefine el concepto de vida urbana. Ubicado en el corazón de Providencia, frente al parque, ofrece una conectividad inigualable y vistas despejadas que garantizan luz natural durante todo el día.
-            </p>
-            <p class="text-slate-600 leading-relaxed">
-              Equipado con terminaciones de alto estándar, sistema domótico integrado, ventanas termopanel y amplias terrazas. Las áreas comunes incluyen piscina panorámica, gimnasio equipado, salón gourmet y bicicleteros.
-            </p>
+            <p class="text-slate-600 leading-relaxed whitespace-pre-line">{{ detalle.proyecto.descripcion }}</p>
           </div>
-        </div>
 
-        <!-- Bloque Derecho: Formulario de Captura de Leads (4 Columnas) -->
-        <div class="lg:col-span-4">
-          <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl sticky top-28">
-            <div class="flex items-center gap-3 mb-6">
-              <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
-                <ShieldCheck class="w-6 h-6 text-[#003399]" />
-              </div>
-              <div>
-                <h3 class="text-xl font-black text-slate-900 leading-tight">Contacto Directo</h3>
-                <p class="text-xs text-slate-500">Agente verificado UrbanSphere</p>
-              </div>
+          <div v-if="detalle.tipologias.length" class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+            <h3 class="text-xl font-black text-slate-900 mb-4">Tipologías disponibles</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="text-left text-xs uppercase text-slate-500 border-b">
+                    <th class="pb-2 pr-4">Código</th>
+                    <th class="pb-2 pr-4">Dorms.</th>
+                    <th class="pb-2 pr-4">Baños</th>
+                    <th class="pb-2 pr-4">m²</th>
+                    <th class="pb-2">UF</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr v-for="t in detalle.tipologias" :key="t.id">
+                    <td class="py-3 pr-4 font-bold">{{ t.codigoTipologia }}</td>
+                    <td class="py-3 pr-4">{{ t.dormitorios }}</td>
+                    <td class="py-3 pr-4">{{ t.banos }}</td>
+                    <td class="py-3 pr-4">{{ t.superficieM2 }}</td>
+                    <td class="py-3 font-bold text-[#003399]">{{ formatearPrecioUf(t.valorEnUf) }}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-            
-            <form class="flex flex-col gap-4" @submit.prevent>
-              <div>
-                <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Nombre completo *</label>
-                <input type="text" class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:border-[#003399] bg-slate-50 focus:bg-white transition-colors" placeholder="Ej: Juan Pérez" />
-              </div>
-              <div>
-                <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Correo electrónico *</label>
-                <input type="email" class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:border-[#003399] bg-slate-50 focus:bg-white transition-colors" placeholder="ejemplo@correo.com" />
-              </div>
-              <div>
-                <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Teléfono</label>
-                <input type="tel" class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:border-[#003399] bg-slate-50 focus:bg-white transition-colors" placeholder="+56 9 1234 5678" />
-              </div>
-              <div>
-                <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Mensaje</label>
-                <textarea class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:border-[#003399] bg-slate-50 focus:bg-white transition-colors resize-none" rows="3" placeholder="Hola, me gustaría recibir más información sobre este proyecto..."></textarea>
-              </div>
-              <button class="w-full bg-[#0f172a] text-white py-4 rounded-xl font-bold hover:bg-[#003399] transition-all shadow-md mt-2 flex items-center justify-center gap-2">
-                Solicitar Información
-              </button>
-              <p class="text-center text-[10px] text-slate-400 mt-2">
-                Al enviar aceptas nuestros términos de servicio y políticas de privacidad.
-              </p>
-            </form>
+          </div>
+
+          <div v-if="equipamientoActivo.length" class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+            <h3 class="text-xl font-black text-slate-900 mb-4">Equipamiento</h3>
+            <div class="flex flex-wrap gap-2">
+              <span
+                v-for="item in equipamientoActivo"
+                :key="item.key"
+                class="text-xs font-bold bg-blue-50 text-[#003399] px-3 py-1.5 rounded-full"
+              >
+                {{ item.label }}
+              </span>
+            </div>
           </div>
         </div>
 
+        <div v-if="mostrarSidebarInteres" class="lg:col-span-4">
+          <FormularioMeInteresa :proyecto-id="detalle.proyecto.id" :titulo-proyecto="detalle.proyecto.titulo" />
+        </div>
       </div>
     </div>
   </PublicLayout>

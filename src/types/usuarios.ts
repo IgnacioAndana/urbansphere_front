@@ -117,6 +117,17 @@ export interface SolicitudInteres extends SolicitudInteresDto {
   creadoEn?: string
 }
 
+export interface SolicitudContactoDto {
+  nombreCompleto: string
+  email: string
+  mensaje: string
+}
+
+export interface SolicitudContacto extends SolicitudContactoDto {
+  id: number
+  creadoEn?: string
+}
+
 /** Respuesta de error estándar del BFF / NestJS */
 export interface ApiErrorBody {
   message?: string | ApiErrorBody

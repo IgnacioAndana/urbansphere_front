@@ -10,44 +10,66 @@ const latitud = defineModel<number>('latitud', { required: true })
 const longitud = defineModel<number>('longitud', { required: true })
 
 const mapContainer = ref<HTMLElement | null>(null)
+const listoParaMapa = ref(false)
 
 let map: L.Map | null = null
 let marker: L.Marker | null = null
 
 function destruirMapa() {
-  map?.remove()
-  map = null
-  marker = null
+  if (map) {
+    map.remove()
+    map = null
+    marker = null
+  }
 }
 
 function initMap() {
-  if (!mapContainer.value) return
+  const el = mapContainer.value
+  if (!el || el.offsetParent === null && el.offsetWidth === 0) return false
 
-  destruirMapa()
+  try {
+    destruirMapa()
+    map = L.map(el).setView([latitud.value, longitud.value], 13)
 
-  map = L.map(mapContainer.value).setView([latitud.value, longitud.value], 13)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap &copy; CARTO',
+      subdomains: 'abcd',
+      maxZoom: 20,
+    }).addTo(map)
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; OpenStreetMap &copy; CARTO',
-    subdomains: 'abcd',
-    maxZoom: 20,
-  }).addTo(map)
+    marker = L.marker([latitud.value, longitud.value], { draggable: true }).addTo(map)
 
-  marker = L.marker([latitud.value, longitud.value], { draggable: true }).addTo(map)
+    marker.on('dragend', (e) => {
+      const position = e.target.getLatLng()
+      latitud.value = Number(position.lat.toFixed(6))
+      longitud.value = Number(position.lng.toFixed(6))
+    })
 
-  marker.on('dragend', (e) => {
-    const position = e.target.getLatLng()
-    latitud.value = Number(position.lat.toFixed(6))
-    longitud.value = Number(position.lng.toFixed(6))
+    map.on('click', (e) => {
+      latitud.value = Number(e.latlng.lat.toFixed(6))
+      longitud.value = Number(e.latlng.lng.toFixed(6))
+      marker?.setLatLng(e.latlng)
+    })
+
+    requestAnimationFrame(() => map?.invalidateSize())
+    return true
+  } catch {
+    return false
+  }
+}
+
+async function montarMapa() {
+  listoParaMapa.value = true
+  await nextTick()
+  await nextTick()
+
+  if (initMap()) return
+
+  requestAnimationFrame(() => {
+    if (!initMap()) {
+      setTimeout(() => initMap(), 100)
+    }
   })
-
-  map.on('click', (e) => {
-    latitud.value = Number(e.latlng.lat.toFixed(6))
-    longitud.value = Number(e.latlng.lng.toFixed(6))
-    marker?.setLatLng(e.latlng)
-  })
-
-  requestAnimationFrame(() => map?.invalidateSize())
 }
 
 function actualizarDesdeInputs() {
@@ -61,11 +83,7 @@ function actualizarDesdeInputs() {
   }
 }
 
-onMounted(async () => {
-  await nextTick()
-  initMap()
-})
-
+onMounted(montarMapa)
 onUnmounted(destruirMapa)
 
 watch([latitud, longitud], () => {
@@ -76,6 +94,11 @@ watch([latitud, longitud], () => {
 <template>
   <div class="flex flex-col gap-3">
     <div
+      v-if="!listoParaMapa"
+      class="w-full bg-slate-100 rounded-xl border border-slate-200 min-h-[200px] animate-pulse"
+    />
+    <div
+      v-show="listoParaMapa"
       ref="mapContainer"
       class="w-full bg-slate-100 rounded-xl border border-slate-200 min-h-[200px] z-0"
     />
