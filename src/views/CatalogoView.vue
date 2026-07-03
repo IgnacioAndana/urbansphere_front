@@ -4,7 +4,10 @@ import { MapPin, Filter, Bed, Bath, Maximize, Heart } from 'lucide-vue-next'
 import PublicLayout from '../layouts/PublicLayout.vue'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
+import { configurarIconosLeaflet } from '../utils/leafletSetup'
 import isotipoUrl from '../assets/UrbanSphere-Isotipo.png'
+
+configurarIconosLeaflet()
 
 const mapContainer = ref<HTMLElement | null>(null)
 const vistaMobile = ref<'lista' | 'mapa'>('lista')

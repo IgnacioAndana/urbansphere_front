@@ -1,4 +1,4 @@
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { proyectosService } from '../services/proyectos'
@@ -27,7 +27,7 @@ export function useProyectoForm() {
   const longitud = ref(-70.6693)
   const descripcion = ref('')
 
-  const cargando = ref(false)
+  const cargando = ref(route.name === 'admin-proyecto-editar')
   const guardando = ref(false)
   const errorMsg = ref('')
   const avisoIa = ref('')
@@ -55,9 +55,13 @@ export function useProyectoForm() {
     }
   }
 
-  onMounted(() => {
-    if (esEdicion.value) cargarProyecto()
-  })
+  watch(
+    () => [route.name, route.params.proyectoId] as const,
+    ([name]) => {
+      if (name === 'admin-proyecto-editar') cargarProyecto()
+    },
+    { immediate: true },
+  )
 
   function generarDescripcionSimulada(): string {
     let texto = `Descubre ${titulo.value.trim()}, un proyecto residencial en ${comuna.value.trim()}. `

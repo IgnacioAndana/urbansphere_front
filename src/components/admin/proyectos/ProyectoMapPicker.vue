@@ -1,18 +1,31 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import * as L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { configurarIconosLeaflet } from '../../../utils/leafletSetup'
+
+configurarIconosLeaflet()
 
 const latitud = defineModel<number>('latitud', { required: true })
 const longitud = defineModel<number>('longitud', { required: true })
 
+const mapContainer = ref<HTMLElement | null>(null)
+
 let map: L.Map | null = null
 let marker: L.Marker | null = null
 
-const initMap = () => {
-  if (map) map.remove()
+function destruirMapa() {
+  map?.remove()
+  map = null
+  marker = null
+}
 
-  map = L.map('proyectoMapPicker').setView([latitud.value, longitud.value], 13)
+function initMap() {
+  if (!mapContainer.value) return
+
+  destruirMapa()
+
+  map = L.map(mapContainer.value).setView([latitud.value, longitud.value], 13)
 
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; OpenStreetMap &copy; CARTO',
@@ -20,17 +33,7 @@ const initMap = () => {
     maxZoom: 20,
   }).addTo(map)
 
-  const icon = L.icon({
-    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41],
-  })
-
-  marker = L.marker([latitud.value, longitud.value], { draggable: true, icon }).addTo(map)
+  marker = L.marker([latitud.value, longitud.value], { draggable: true }).addTo(map)
 
   marker.on('dragend', (e) => {
     const position = e.target.getLatLng()
@@ -44,10 +47,10 @@ const initMap = () => {
     marker?.setLatLng(e.latlng)
   })
 
-  nextTick(() => map?.invalidateSize())
+  requestAnimationFrame(() => map?.invalidateSize())
 }
 
-const actualizarDesdeInputs = () => {
+function actualizarDesdeInputs() {
   if (!map || !marker) return
   const lat = Number(latitud.value)
   const lng = Number(longitud.value)
@@ -58,11 +61,12 @@ const actualizarDesdeInputs = () => {
   }
 }
 
-onMounted(() => nextTick(initMap))
-onUnmounted(() => {
-  map?.remove()
-  map = null
+onMounted(async () => {
+  await nextTick()
+  initMap()
 })
+
+onUnmounted(destruirMapa)
 
 watch([latitud, longitud], () => {
   if (map && marker) actualizarDesdeInputs()
@@ -71,7 +75,10 @@ watch([latitud, longitud], () => {
 
 <template>
   <div class="flex flex-col gap-3">
-    <div id="proyectoMapPicker" class="w-full bg-slate-100 rounded-xl border border-slate-200 min-h-[200px] z-0" />
+    <div
+      ref="mapContainer"
+      class="w-full bg-slate-100 rounded-xl border border-slate-200 min-h-[200px] z-0"
+    />
     <p class="text-[10px] text-slate-500">Arrastra el marcador o haz clic en el mapa.</p>
     <div class="grid grid-cols-2 gap-3">
       <div>

@@ -8,6 +8,7 @@ const fechaMinimaEntrega = fechaMinimaHoyLocal()
 
 const {
   esEdicion,
+  proyectoId,
   titulo,
   direccion,
   comuna,
@@ -76,7 +77,11 @@ const {
 
       <div class="lg:col-span-5 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm">
         <h3 class="text-sm font-bold text-slate-800 mb-4">Geolocalización</h3>
-        <ProyectoMapPicker v-model:latitud="latitud" v-model:longitud="longitud" />
+        <ProyectoMapPicker
+          :key="proyectoId ?? 'nuevo'"
+          v-model:latitud="latitud"
+          v-model:longitud="longitud"
+        />
       </div>
     </div>
 
