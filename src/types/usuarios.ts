@@ -119,6 +119,7 @@ export interface SolicitudInteres {
   usuarioId?: number | null
   estado?: EstadoSolicitud
   observacionAgente?: string | null
+  fechaCierre?: string | null
   creadoEn?: string
 }
 
@@ -137,6 +138,7 @@ export interface SolicitudContacto extends SolicitudContactoDto {
   id: number
   estado?: EstadoSolicitud
   observacionAgente?: string | null
+  fechaCierre?: string | null
   creadoEn?: string
 }
 

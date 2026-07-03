@@ -6,6 +6,7 @@ import type {
   SolicitudInteresDto,
 } from '../../types/usuarios'
 import { aEnteroPositivo } from '../../utils/numeros'
+import { normalizarSolicitudInteres } from '../../utils/normalizarSolicitud'
 
 export const solicitudesInteresService = {
   /** POST /solicitudes-interes — JWT user; nombre/email desde la cuenta */
@@ -19,22 +20,24 @@ export const solicitudesInteresService = {
   /** GET /solicitudes-interes?estado= — Panel admin/agent */
   async listar(estado?: EstadoSolicitud): Promise<SolicitudInteres[]> {
     const params = estado ? { estado } : undefined
-    const { data } = await api.get<SolicitudInteres[]>('/solicitudes-interes', { params })
-    return Array.isArray(data) ? data : []
+    const { data } = await api.get<unknown[]>('/solicitudes-interes', { params })
+    if (!Array.isArray(data)) return []
+    return data.map(normalizarSolicitudInteres).filter((s): s is SolicitudInteres => s != null)
   },
 
   async listarPorProyecto(proyectoId: number): Promise<SolicitudInteres[]> {
     const id = aEnteroPositivo(proyectoId)
-    const { data } = await api.get<SolicitudInteres[]>(`/solicitudes-interes/proyecto/${id}`)
-    return Array.isArray(data) ? data : []
+    const { data } = await api.get<unknown[]>(`/solicitudes-interes/proyecto/${id}`)
+    if (!Array.isArray(data)) return []
+    return data.map(normalizarSolicitudInteres).filter((s): s is SolicitudInteres => s != null)
   },
 
-  /** PATCH /solicitudes-interes/:id/gestion */
+  /** PATCH /solicitudes-interes/:id/gestion — irreversible a resuelta */
   async gestionar(id: number, dto: GestionSolicitudDto): Promise<SolicitudInteres> {
-    const { data } = await api.patch<SolicitudInteres>(
+    const { data } = await api.patch<unknown>(
       `/solicitudes-interes/${aEnteroPositivo(id)}/gestion`,
       dto,
     )
-    return data
+    return normalizarSolicitudInteres(data)!
   },
 }
