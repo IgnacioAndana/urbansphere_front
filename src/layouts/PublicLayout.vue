@@ -73,7 +73,7 @@ const manejarCerrarSesion = async () => {
 
             <router-link
               v-if="!accesoAdmin"
-              to="/perfil"
+              to="/perfil/datos"
               title="Mi perfil"
               class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-[#003399] transition-all"
             >
@@ -133,7 +133,7 @@ const manejarCerrarSesion = async () => {
         <div class="flex flex-col items-center gap-2 w-full max-w-xs">
           <router-link
             v-if="!accesoAdmin"
-            to="/perfil"
+            to="/perfil/datos"
             class="flex items-center justify-center gap-2 w-full text-sm font-bold text-slate-700 hover:bg-blue-50 hover:text-[#003399] p-3 rounded-xl transition-colors"
             @click="menuAbierto = false"
           >

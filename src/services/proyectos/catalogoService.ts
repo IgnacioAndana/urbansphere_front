@@ -4,6 +4,7 @@ import {
   imagenesProyectoService,
   equipamientoService,
 } from './index'
+import { favoritosService } from '../usuarios'
 import type { Equipamiento, Proyecto, ProyectoImagen, Tipologia } from '../../types/proyectos'
 import { mapProyectoCatalogo, type ProyectoCatalogoItem } from '../../utils/catalogoProyecto'
 
@@ -29,6 +30,19 @@ export const catalogoService = {
         return mapProyectoCatalogo(proyecto, tipologias, imagenes)
       }),
     )
+  },
+
+  /** Favoritos del usuario autenticado, ordenados por fecha de agregado (MS Usuarios + batch catálogo). */
+  async listarFavoritosUsuario(): Promise<ProyectoCatalogoItem[]> {
+    const { favoritos, proyectoIds } = await favoritosService.listar()
+    if (!proyectoIds.length) return []
+
+    const { items } = await proyectosService.consultarCatalogo(proyectoIds)
+    const porId = new Map(items.map((p) => [p.id, p]))
+
+    return favoritos
+      .map((f) => porId.get(f.proyectoId))
+      .filter((p): p is ProyectoCatalogoItem => p != null)
   },
 
   async obtenerDetalle(id: number): Promise<ProyectoDetallePublico | null> {

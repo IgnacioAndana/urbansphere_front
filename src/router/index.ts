@@ -108,9 +108,21 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/perfil',
-    name: 'perfil',
-    component: () => import('../views/PerfilView.vue'),
+    component: () => import('../views/perfil/PerfilLayoutView.vue'),
     meta: { requiresAuth: true },
+    redirect: '/perfil/datos',
+    children: [
+      {
+        path: 'datos',
+        name: 'perfil-datos',
+        component: () => import('../views/perfil/PerfilDatosView.vue'),
+      },
+      {
+        path: 'favoritos',
+        name: 'perfil-favoritos',
+        component: () => import('../views/perfil/PerfilFavoritosView.vue'),
+      },
+    ],
   },
   {
     path: '/admin',

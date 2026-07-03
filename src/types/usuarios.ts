@@ -128,6 +128,20 @@ export interface SolicitudContacto extends SolicitudContactoDto {
   creadoEn?: string
 }
 
+// --- Favoritos ---
+
+export interface FavoritoItem {
+  id: number
+  proyectoId: number
+  agregadoEn: string
+}
+
+export interface ListarFavoritosResponse {
+  total: number
+  proyectoIds: number[]
+  favoritos: FavoritoItem[]
+}
+
 /** Respuesta de error estándar del BFF / NestJS */
 export interface ApiErrorBody {
   message?: string | ApiErrorBody

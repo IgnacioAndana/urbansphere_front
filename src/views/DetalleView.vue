@@ -4,14 +4,14 @@ import { useRoute } from 'vue-router'
 import { MapPin, Bed, Bath, Maximize, Calendar, ChevronRight, Heart } from 'lucide-vue-next'
 import PublicLayout from '../layouts/PublicLayout.vue'
 import FormularioMeInteresa from '../components/catalogo/FormularioMeInteresa.vue'
-import { catalogoService } from '../services/proyectos'
+import { catalogoService, imagenesTipologiaService } from '../services/proyectos'
 import type { ProyectoDetallePublico } from '../services/proyectos/catalogoService'
+import type { TipologiaImagen } from '../types/proyectos'
 import { obtenerMensajeError } from '../utils/apiError'
 import {
   formatearPrecioUf,
   formatearRango,
   formatearTipoProyecto,
-  obtenerUrlPortada,
 } from '../utils/catalogoProyecto'
 import { ordenarImagenes } from '../utils/imagenesGaleria'
 import { EQUIPAMIENTO_OPCIONES } from '../types/proyectos'
@@ -33,10 +33,29 @@ const imagenesOrdenadas = computed(() =>
   detalle.value ? ordenarImagenes(detalle.value.imagenes) : [],
 )
 
-const imagenPrincipal = computed(() => {
-  if (!detalle.value) return null
-  return obtenerUrlPortada(detalle.value.imagenes)
+const imagenProyectoActivaId = ref<number | null>(null)
+
+const imagenProyectoActiva = computed(() =>
+  imagenesOrdenadas.value.find((img) => img.id === imagenProyectoActivaId.value) ?? null,
+)
+
+const tipologiaSeleccionadaId = ref<number | null>(null)
+const imagenesPorTipologia = ref<Map<number, TipologiaImagen[]>>(new Map())
+const cargandoImagenesTipologia = ref(false)
+const imagenTipologiaActivaId = ref<number | null>(null)
+
+const tipologiaSeleccionada = computed(() =>
+  detalle.value?.tipologias.find((t) => t.id === tipologiaSeleccionadaId.value) ?? null,
+)
+
+const imagenesTipologiaOrdenadas = computed(() => {
+  if (!tipologiaSeleccionadaId.value) return []
+  return imagenesPorTipologia.value.get(tipologiaSeleccionadaId.value) ?? []
 })
+
+const imagenTipologiaActiva = computed(() =>
+  imagenesTipologiaOrdenadas.value.find((img) => img.id === imagenTipologiaActivaId.value) ?? null,
+)
 
 const equipamientoActivo = computed(() => {
   if (!detalle.value?.equipamiento) return []
@@ -56,6 +75,80 @@ const mostrarSidebarInteres = computed(() => {
   return esUsuarioEstandar(authService.obtenerRolIdLocal())
 })
 
+function seleccionarImagenProyecto(id: number) {
+  imagenProyectoActivaId.value = id
+}
+
+function seleccionarImagenTipologia(id: number) {
+  imagenTipologiaActivaId.value = id
+}
+
+function fijarImagenProyectoPorDefecto() {
+  const imgs = imagenesOrdenadas.value
+  if (!imgs.length) {
+    imagenProyectoActivaId.value = null
+    return
+  }
+  const actualValida = imgs.some((i) => i.id === imagenProyectoActivaId.value)
+  if (!actualValida) {
+    const portada = imgs.find((i) => i.esPortada) ?? imgs[0]
+    imagenProyectoActivaId.value = portada.id
+  }
+}
+
+function fijarImagenTipologiaPorDefecto(tipologiaId: number) {
+  const imgs = imagenesPorTipologia.value.get(tipologiaId) ?? []
+  if (!imgs.length) {
+    imagenTipologiaActivaId.value = null
+    return
+  }
+  const portada = imgs.find((i) => i.esPortada) ?? imgs[0]
+  imagenTipologiaActivaId.value = portada.id
+}
+
+async function cargarImagenesTipologia(tipologiaId: number) {
+  if (imagenesPorTipologia.value.has(tipologiaId)) {
+    fijarImagenTipologiaPorDefecto(tipologiaId)
+    return
+  }
+  cargandoImagenesTipologia.value = true
+  try {
+    const imgs = await imagenesTipologiaService.listar(proyectoId.value, tipologiaId)
+    imagenesPorTipologia.value.set(tipologiaId, ordenarImagenes(imgs))
+    fijarImagenTipologiaPorDefecto(tipologiaId)
+  } catch {
+    imagenesPorTipologia.value.set(tipologiaId, [])
+    imagenTipologiaActivaId.value = null
+  } finally {
+    cargandoImagenesTipologia.value = false
+  }
+}
+
+function seleccionarTipologia(id: number) {
+  if (tipologiaSeleccionadaId.value === id) return
+  tipologiaSeleccionadaId.value = id
+}
+
+watch(imagenesOrdenadas, fijarImagenProyectoPorDefecto, { immediate: true })
+
+watch(
+  () => detalle.value?.tipologias,
+  (tips) => {
+    if (!tips?.length) {
+      tipologiaSeleccionadaId.value = null
+      return
+    }
+    if (!tips.some((t) => t.id === tipologiaSeleccionadaId.value)) {
+      tipologiaSeleccionadaId.value = tips[0].id
+    }
+  },
+  { immediate: true },
+)
+
+watch(tipologiaSeleccionadaId, (id) => {
+  if (id != null) void cargarImagenesTipologia(id)
+})
+
 async function cargar() {
   if (Number.isNaN(proyectoId.value)) {
     errorMsg.value = 'Proyecto no válido.'
@@ -64,6 +157,9 @@ async function cargar() {
   }
   cargando.value = true
   errorMsg.value = ''
+  imagenesPorTipologia.value = new Map()
+  tipologiaSeleccionadaId.value = null
+  imagenProyectoActivaId.value = null
   try {
     detalle.value = await catalogoService.obtenerDetalle(proyectoId.value)
     if (!detalle.value) {
@@ -153,24 +249,28 @@ watch(proyectoId, cargar)
             </div>
           </div>
 
+          <!-- Galería del proyecto -->
           <div class="rounded-3xl overflow-hidden border border-slate-200 shadow-sm bg-white">
             <img
-              v-if="imagenPrincipal"
-              :src="imagenPrincipal"
+              v-if="imagenProyectoActiva"
+              :src="imagenProyectoActiva.urlS3"
               :alt="detalle.proyecto.titulo"
               class="w-full h-[320px] sm:h-[420px] object-cover"
             />
-            <div v-else class="h-[320px] flex items-center justify-center bg-slate-100">
+            <div v-else class="h-[320px] sm:h-[420px] flex items-center justify-center bg-slate-100">
               <img :src="isotipoUrl" alt="" class="w-32 h-32 opacity-30 object-contain" />
             </div>
             <div v-if="imagenesOrdenadas.length > 1" class="p-4 flex gap-2 overflow-x-auto">
-              <img
+              <button
                 v-for="img in imagenesOrdenadas"
                 :key="img.id"
-                :src="img.urlS3"
-                alt="Galería"
-                class="w-20 h-20 rounded-lg object-cover shrink-0 border border-slate-200"
-              />
+                type="button"
+                class="shrink-0 rounded-lg overflow-hidden border-2 transition-all focus:outline-none focus:ring-2 focus:ring-[#003399]"
+                :class="img.id === imagenProyectoActivaId ? 'border-[#003399] ring-2 ring-blue-100' : 'border-slate-200 opacity-70 hover:opacity-100'"
+                @click="seleccionarImagenProyecto(img.id)"
+              >
+                <img :src="img.urlS3" alt="Miniatura" class="w-20 h-20 object-cover" />
+              </button>
             </div>
           </div>
 
@@ -179,8 +279,10 @@ watch(proyectoId, cargar)
             <p class="text-slate-600 leading-relaxed whitespace-pre-line">{{ detalle.proyecto.descripcion }}</p>
           </div>
 
+          <!-- Tipologías con selector e imágenes -->
           <div v-if="detalle.tipologias.length" class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
-            <h3 class="text-xl font-black text-slate-900 mb-4">Tipologías disponibles</h3>
+            <h3 class="text-xl font-black text-slate-900 mb-2">Tipologías disponibles</h3>
+            <p class="text-sm text-slate-500 mb-4">Selecciona un código para ver sus imágenes.</p>
             <div class="overflow-x-auto">
               <table class="w-full text-sm">
                 <thead>
@@ -193,8 +295,16 @@ watch(proyectoId, cargar)
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                  <tr v-for="t in detalle.tipologias" :key="t.id">
-                    <td class="py-3 pr-4 font-bold">{{ t.codigoTipologia }}</td>
+                  <tr
+                    v-for="t in detalle.tipologias"
+                    :key="t.id"
+                    class="cursor-pointer transition-colors"
+                    :class="t.id === tipologiaSeleccionadaId ? 'bg-blue-50' : 'hover:bg-slate-50'"
+                    @click="seleccionarTipologia(t.id)"
+                  >
+                    <td class="py-3 pr-4 font-bold" :class="t.id === tipologiaSeleccionadaId ? 'text-[#003399]' : ''">
+                      {{ t.codigoTipologia }}
+                    </td>
                     <td class="py-3 pr-4">{{ t.dormitorios }}</td>
                     <td class="py-3 pr-4">{{ t.banos }}</td>
                     <td class="py-3 pr-4">{{ t.superficieM2 }}</td>
@@ -202,6 +312,36 @@ watch(proyectoId, cargar)
                   </tr>
                 </tbody>
               </table>
+            </div>
+
+            <div v-if="tipologiaSeleccionada" class="mt-6 pt-6 border-t border-slate-100">
+              <h4 class="text-sm font-black text-slate-800 mb-3">
+                Imágenes — {{ tipologiaSeleccionada.codigoTipologia }}
+              </h4>
+              <div v-if="cargandoImagenesTipologia" class="text-sm text-slate-400 py-8 text-center">
+                Cargando imágenes...
+              </div>
+              <template v-else-if="imagenesTipologiaOrdenadas.length">
+                <img
+                  v-if="imagenTipologiaActiva"
+                  :src="imagenTipologiaActiva.urlS3"
+                  :alt="`Tipología ${tipologiaSeleccionada.codigoTipologia}`"
+                  class="w-full max-h-[360px] object-contain bg-slate-50 rounded-xl border border-slate-200"
+                />
+                <div v-if="imagenesTipologiaOrdenadas.length > 1" class="mt-3 flex gap-2 overflow-x-auto">
+                  <button
+                    v-for="img in imagenesTipologiaOrdenadas"
+                    :key="img.id"
+                    type="button"
+                    class="shrink-0 rounded-lg overflow-hidden border-2 transition-all focus:outline-none"
+                    :class="img.id === imagenTipologiaActivaId ? 'border-[#003399]' : 'border-slate-200 opacity-70 hover:opacity-100'"
+                    @click="seleccionarImagenTipologia(img.id)"
+                  >
+                    <img :src="img.urlS3" alt="Miniatura tipología" class="w-16 h-16 object-cover" />
+                  </button>
+                </div>
+              </template>
+              <p v-else class="text-sm text-slate-400 py-4">Esta tipología aún no tiene imágenes.</p>
             </div>
           </div>
 

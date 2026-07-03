@@ -1,10 +1,24 @@
 import api from '../api'
+import type { ListarFavoritosResponse } from '../../types/usuarios'
 import { aEnteroPositivo, normalizarIdsNumericos } from '../../utils/numeros'
 
 export const favoritosService = {
+  async listar(): Promise<ListarFavoritosResponse> {
+    const { data } = await api.get<ListarFavoritosResponse>('/favoritos')
+    return {
+      total: data.total ?? 0,
+      proyectoIds: normalizarIdsNumericos(data.proyectoIds ?? []),
+      favoritos: (data.favoritos ?? []).map((f) => ({
+        id: aEnteroPositivo(f.id),
+        proyectoId: aEnteroPositivo(f.proyectoId),
+        agregadoEn: f.agregadoEn,
+      })),
+    }
+  },
+
   async obtenerIdsFavoritos(): Promise<number[]> {
-    const { data } = await api.get<{ proyectoIds: unknown[] }>('/favoritos/ids')
-    return normalizarIdsNumericos(data.proyectoIds ?? [])
+    const { proyectoIds } = await this.listar()
+    return proyectoIds
   },
 
   async esFavorito(proyectoId: number): Promise<boolean> {
@@ -23,10 +37,5 @@ export const favoritosService = {
 
   async eliminarFavorito(proyectoId: number): Promise<void> {
     await api.delete(`/favoritos/${aEnteroPositivo(proyectoId)}`)
-  },
-
-  async obtenerFavoritos(): Promise<unknown[]> {
-    const { data } = await api.get<unknown[]>('/favoritos')
-    return data
   },
 }

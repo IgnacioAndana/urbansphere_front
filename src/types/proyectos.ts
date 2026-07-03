@@ -82,6 +82,40 @@ export interface Equipamiento {
 
 export type ActualizarEquipamientoDto = Omit<Equipamiento, 'proyectoId'>
 
+export type MotivoCatalogoOmitido = 'no_encontrado' | 'inactivo'
+
+export interface CatalogoOmitido {
+  id: number
+  motivo: MotivoCatalogoOmitido
+}
+
+/** Item resumido devuelto por POST /proyectos/catalogo (misma forma que catálogo público). */
+export interface ProyectoCatalogoApiItem {
+  id: number
+  titulo: string
+  tipo: TipoProyecto
+  comuna: string
+  direccion: string
+  latitud: number
+  longitud: number
+  descripcion: string
+  fechaEntregaEstimada?: string
+  estado?: string
+  urlPortada: string | null
+  precioDesdeUf: number | null
+  dormitoriosMin: number | null
+  dormitoriosMax: number | null
+  banosMin: number | null
+  banosMax: number | null
+  superficieMin: number | null
+  superficieMax: number | null
+}
+
+export interface ConsultarCatalogoResponse {
+  items: ProyectoCatalogoApiItem[]
+  omitidos: CatalogoOmitido[]
+}
+
 export const EQUIPAMIENTO_OPCIONES: { key: keyof ActualizarEquipamientoDto; label: string }[] = [
   { key: 'gimnasio', label: 'Gimnasio' },
   { key: 'piscina', label: 'Piscina' },

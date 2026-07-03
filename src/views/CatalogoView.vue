@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, nextTick, watch, computed } from 'vue'
-import { MapPin, Bed, Bath, Maximize, Heart } from 'lucide-vue-next'
+import { MapPin, X } from 'lucide-vue-next'
 import PublicLayout from '../layouts/PublicLayout.vue'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
@@ -11,12 +11,11 @@ import {
   extraerComunas,
   filtrarProyectosCatalogo,
   formatearPrecioUf,
-  formatearRango,
   formatearTipoProyecto,
   type ProyectoCatalogoItem,
 } from '../utils/catalogoProyecto'
 import { useFavoritos } from '../composables/useFavoritos'
-import isotipoUrl from '../assets/UrbanSphere-Isotipo.png'
+import ProyectoCatalogoCard from '../components/catalogo/ProyectoCatalogoCard.vue'
 
 configurarIconosLeaflet()
 
@@ -46,6 +45,28 @@ const proyectos = computed(() =>
     precioMax: precioMax.value,
   }),
 )
+
+const hayFiltrosActivos = computed(() => {
+  const min = precioMin.value
+  const max = precioMax.value
+  const precioMinActivo = min != null && !Number.isNaN(min)
+  const precioMaxActivo = max != null && !Number.isNaN(max)
+  return (
+    filtroTexto.value.trim() !== '' ||
+    filtroComuna.value !== 'Todas' ||
+    filtroTipo.value !== 'Todos' ||
+    precioMinActivo ||
+    precioMaxActivo
+  )
+})
+
+function limpiarFiltros() {
+  filtroTexto.value = ''
+  filtroComuna.value = 'Todas'
+  filtroTipo.value = 'Todos'
+  precioMin.value = null
+  precioMax.value = null
+}
 
 let leafletMap: L.Map | undefined
 let markersLayer: L.LayerGroup | undefined
@@ -207,6 +228,14 @@ async function toggleFavorito(id: number | string) {
                 class="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-600 bg-white min-w-0"
               />
             </div>
+            <button
+              v-if="hayFiltrosActivos"
+              type="button"
+              class="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-colors"
+              @click="limpiarFiltros"
+            >
+              <X class="w-4 h-4" /> Limpiar filtros
+            </button>
           </div>
 
           <div class="p-4 sm:p-6 flex flex-col gap-4 pb-8">
@@ -222,69 +251,13 @@ async function toggleFavorito(id: number | string) {
                 No hay proyectos activos que coincidan con tu búsqueda.
               </p>
 
-              <div v-for="prop in proyectos" :key="prop.id" class="flex flex-col gap-4">
-                <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm flex flex-col sm:flex-row group hover:border-[#003399] transition-colors">
-                  <div class="w-full sm:w-2/5 h-40 sm:h-auto min-h-[140px] relative bg-slate-100 sm:border-r border-slate-100 overflow-hidden">
-                    <img
-                      v-if="prop.urlPortada"
-                      :src="prop.urlPortada"
-                      :alt="prop.titulo"
-                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div v-else class="w-full h-full flex items-center justify-center p-4">
-                      <img :src="isotipoUrl" alt="" class="w-20 h-20 object-contain opacity-30" />
-                    </div>
-                    <div class="absolute top-2 left-2 bg-emerald-500 text-white text-[10px] font-black px-2 py-1 rounded uppercase">
-                      En venta
-                    </div>
-                  </div>
-
-                  <div class="w-full sm:w-3/5 p-4 flex flex-col justify-between min-w-0">
-                    <div>
-                      <h3 class="font-black text-xl sm:text-2xl text-slate-900">{{ formatearPrecioUf(prop.precioDesdeUf) }}</h3>
-                      <p class="text-[10px] text-slate-400 mt-0.5 uppercase tracking-wide font-bold">
-                        Desde · {{ formatearTipoProyecto(prop.tipo) }}
-                      </p>
-                      <p class="font-bold text-sm text-slate-800 mt-3">{{ prop.titulo }}</p>
-                      <p class="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                        <MapPin class="w-3 h-3" /> {{ prop.comuna }} · {{ prop.direccion }}
-                      </p>
-                      <div class="flex flex-wrap items-center gap-3 text-slate-600 font-medium text-xs mt-3">
-                        <span class="flex items-center gap-1">
-                          <Bed class="w-4 h-4 text-slate-400" />
-                          {{ formatearRango(prop.dormitoriosMin, prop.dormitoriosMax) }}
-                        </span>
-                        <span class="flex items-center gap-1">
-                          <Bath class="w-4 h-4 text-slate-400" />
-                          {{ formatearRango(prop.banosMin, prop.banosMax) }}
-                        </span>
-                        <span class="flex items-center gap-1">
-                          <Maximize class="w-4 h-4 text-slate-400" />
-                          {{ formatearRango(prop.superficieMin, prop.superficieMax, ' m²') }}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div class="mt-4 flex gap-2">
-                      <router-link
-                        :to="`/propiedad/${prop.id}`"
-                        class="flex-1 text-center bg-[#0f172a] text-white py-2.5 rounded-lg text-xs font-bold hover:bg-[#003399] transition-colors"
-                      >
-                        Ver detalles
-                      </router-link>
-                      <button
-                        v-if="puedeUsarFavoritos"
-                        type="button"
-                        class="px-3 border rounded-lg transition-colors flex items-center justify-center shrink-0"
-                        :class="esFavorito(prop.id) ? 'border-red-200 bg-red-50 text-red-500' : 'border-slate-200 text-slate-500 hover:bg-slate-50'"
-                        :title="esFavorito(prop.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'"
-                        @click="toggleFavorito(prop.id)"
-                      >
-                        <Heart class="w-4 h-4" :class="esFavorito(prop.id) ? 'fill-current' : ''" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
+              <div v-for="prop in proyectos" :key="prop.id">
+                <ProyectoCatalogoCard
+                  :prop="prop"
+                  :es-favorito="esFavorito(prop.id)"
+                  :mostrar-favorito="puedeUsarFavoritos"
+                  @toggle-favorito="toggleFavorito"
+                />
               </div>
             </template>
           </div>

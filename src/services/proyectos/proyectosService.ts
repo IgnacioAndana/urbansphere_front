@@ -1,5 +1,15 @@
 import api from '../api';
-import type { CrearProyectoDto, Proyecto } from '../../types/proyectos';
+import type { ConsultarCatalogoResponse, CrearProyectoDto, Proyecto, ProyectoCatalogoApiItem } from '../../types/proyectos';
+import { normalizarTipoProyecto, type ProyectoCatalogoItem } from '../../utils/catalogoProyecto';
+import { aEnteroPositivo } from '../../utils/numeros';
+
+function normalizarItemCatalogo(item: ProyectoCatalogoApiItem): ProyectoCatalogoItem {
+  return {
+    ...item,
+    id: aEnteroPositivo(item.id),
+    tipo: normalizarTipoProyecto(item.tipo),
+  };
+}
 
 export const proyectosService = {
   /** POST /proyectos — Crear proyecto (requiere JWT admin/agent) */
@@ -12,6 +22,24 @@ export const proyectosService = {
   async listar(): Promise<Proyecto[]> {
     const { data } = await api.get<Proyecto[]>('/proyectos');
     return data;
+  },
+
+  /** POST /proyectos/catalogo — Ficha resumida batch por IDs */
+  async consultarCatalogo(ids: number[]): Promise<ConsultarCatalogoResponse> {
+    const idsUnicos = [...new Set(ids.map((id) => aEnteroPositivo(id)))];
+    if (idsUnicos.length === 0) {
+      return { items: [], omitidos: [] };
+    }
+    const { data } = await api.post<ConsultarCatalogoResponse>('/proyectos/catalogo', {
+      ids: idsUnicos,
+    });
+    return {
+      items: (data.items ?? []).map(normalizarItemCatalogo),
+      omitidos: (data.omitidos ?? []).map((o) => ({
+        id: aEnteroPositivo(o.id),
+        motivo: o.motivo,
+      })),
+    };
   },
 
   /** GET /proyectos/:id — Obtener proyecto por ID */
