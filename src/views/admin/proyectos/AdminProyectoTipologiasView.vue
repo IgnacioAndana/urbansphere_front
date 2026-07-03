@@ -6,6 +6,7 @@ import ConfirmModal from '../../../components/ConfirmModal.vue'
 import { tipologiasService, imagenesTipologiaService } from '../../../services/proyectos'
 import type { CrearTipologiaDto, Tipologia, TipologiaImagen } from '../../../types/proyectos'
 import { obtenerMensajeError } from '../../../utils/apiError'
+import { obtenerMensajeErrorSubidaImagen, textoLimiteImagen, validarArchivoImagen } from '../../../utils/uploadImagen'
 import { validarTipologiaForm, normalizarTipologiaDto } from '../../../utils/validacionesProyecto'
 import { ordenarImagenes } from '../../../utils/imagenesGaleria'
 
@@ -149,6 +150,14 @@ async function subirImagenTipologia(event: Event) {
   const file = input.files?.[0]
   const t = tipologiaImagenes.value
   if (!file || !t) return
+
+  const errorValidacion = validarArchivoImagen(file)
+  if (errorValidacion) {
+    errorImagenesModal.value = errorValidacion
+    input.value = ''
+    return
+  }
+
   subiendoImagen.value = true
   errorImagenesModal.value = ''
   try {
@@ -156,7 +165,7 @@ async function subirImagenTipologia(event: Event) {
     imagenes.value = await imagenesTipologiaService.listar(proyectoId.value, t.id)
     input.value = ''
   } catch (error) {
-    errorImagenesModal.value = obtenerMensajeError(error, 'Error al subir imagen.')
+    errorImagenesModal.value = obtenerMensajeErrorSubidaImagen(error)
   } finally {
     subiendoImagen.value = false
   }
@@ -321,7 +330,8 @@ async function eliminarImagen(imagenId: number) {
           </p>
           <label class="block w-full border-2 border-dashed border-slate-200 rounded-xl p-4 text-center text-sm text-slate-500 cursor-pointer hover:border-[#003399] mb-4">
             <input type="file" accept="image/*" class="hidden" :disabled="subiendoImagen" @change="subirImagenTipologia" />
-            {{ subiendoImagen ? 'Subiendo...' : 'Agregar imagen' }}
+            <span class="block">{{ subiendoImagen ? 'Subiendo...' : 'Agregar imagen' }}</span>
+            <span class="block text-[11px] text-slate-400 mt-1">{{ textoLimiteImagen() }}</span>
           </label>
           <div v-if="cargandoImagenes" class="text-center text-slate-400 py-4">Cargando...</div>
           <div v-else class="grid grid-cols-2 gap-3">

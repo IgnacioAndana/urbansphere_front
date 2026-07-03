@@ -5,6 +5,7 @@ import { Trash2, Star } from 'lucide-vue-next'
 import { imagenesProyectoService } from '../../../services/proyectos'
 import type { ProyectoImagen } from '../../../types/proyectos'
 import { obtenerMensajeError } from '../../../utils/apiError'
+import { obtenerMensajeErrorSubidaImagen, textoLimiteImagen, validarArchivoImagen } from '../../../utils/uploadImagen'
 import { ordenarImagenes } from '../../../utils/imagenesGaleria'
 
 const route = useRoute()
@@ -32,8 +33,17 @@ async function cargar() {
 }
 
 async function subir(event: Event) {
-  const file = (event.target as HTMLInputElement).files?.[0]
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
   if (!file) return
+
+  const errorValidacion = validarArchivoImagen(file)
+  if (errorValidacion) {
+    errorMsg.value = errorValidacion
+    input.value = ''
+    return
+  }
+
   subiendo.value = true
   errorMsg.value = ''
   try {
@@ -41,9 +51,9 @@ async function subir(event: Event) {
       etiqueta: 'galeria',
     })
     await cargar()
-    ;(event.target as HTMLInputElement).value = ''
+    input.value = ''
   } catch (error) {
-    errorMsg.value = obtenerMensajeError(error, 'Error al subir imagen.')
+    errorMsg.value = obtenerMensajeErrorSubidaImagen(error)
   } finally {
     subiendo.value = false
   }
@@ -81,7 +91,8 @@ async function eliminar(img: ProyectoImagen) {
 
     <label class="block w-full max-w-md border-2 border-dashed border-slate-200 rounded-xl p-6 text-center text-sm text-slate-500 cursor-pointer hover:border-[#003399] bg-white">
       <input type="file" accept="image/*" class="hidden" :disabled="subiendo" @change="subir" />
-      {{ subiendo ? 'Subiendo a S3...' : 'Agregar imagen' }}
+      <span class="block">{{ subiendo ? 'Subiendo a S3...' : 'Agregar imagen' }}</span>
+      <span class="block text-[11px] text-slate-400 mt-1">{{ textoLimiteImagen() }}</span>
     </label>
 
     <div v-if="cargando" class="text-slate-400 text-sm py-8 text-center">Cargando galería...</div>

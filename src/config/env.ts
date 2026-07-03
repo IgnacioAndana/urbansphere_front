@@ -10,3 +10,13 @@ export const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY?.trim() || ''
 export function tieneGeminiConfigurada(): boolean {
   return GEMINI_API_KEY.length > 0
 }
+
+/** Tamaño máximo de imágenes en subidas (debe alinearse con nginx/BFF). */
+const DEFAULT_MAX_IMAGEN_MB = 10
+export const MAX_IMAGEN_MB = (() => {
+  const raw = import.meta.env.VITE_MAX_IMAGEN_MB
+  if (raw == null || String(raw).trim() === '') return DEFAULT_MAX_IMAGEN_MB
+  const parsed = Number(raw)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_MAX_IMAGEN_MB
+})()
+export const MAX_IMAGEN_BYTES = MAX_IMAGEN_MB * 1024 * 1024

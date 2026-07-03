@@ -1,6 +1,7 @@
 import axios, { type AxiosError } from 'axios'
 import type { ApiErrorExtendido } from '../services/api'
 import type { ApiErrorBody } from '../types/usuarios'
+import { MAX_IMAGEN_MB } from '../config/env'
 
 const MENSAJE_LOGIN_401 =
   'Email o contraseña incorrectos. Verifica tus datos e intenta nuevamente.'
@@ -8,10 +9,15 @@ const MENSAJE_LOGIN_401 =
 const MENSAJE_SESION_EXPIRADA =
   'Tu sesión expiró. Inicia sesión nuevamente para continuar.'
 
+function mensaje413(): string {
+  return `La imagen es demasiado grande para el servidor (máximo ${MAX_IMAGEN_MB} MB). Comprímela o elige otra más liviana.`
+}
+
 const MENSAJES_POR_STATUS: Record<number, string> = {
   400: 'Los datos enviados no son válidos.',
   403: 'No tienes permiso para realizar esta acción.',
   404: 'El recurso solicitado no existe.',
+  413: mensaje413(),
   500: 'Error interno del servidor. Intenta más tarde.',
   503: 'El servicio no está disponible. Intenta más tarde.',
 }
@@ -74,9 +80,19 @@ function mensaje401(error: AxiosError): string {
   return MENSAJE_SESION_EXPIRADA
 }
 
+function esErrorTamanoExcesivo(error: AxiosError): boolean {
+  if (error.response?.status === 413) return true
+  const texto = `${error.message} ${error.response?.status ?? ''}`.toLowerCase()
+  return texto.includes('413') || texto.includes('entity too large') || texto.includes('too large')
+}
+
 /** Obtiene un mensaje legible desde la respuesta de error del BFF/NestJS */
 export function obtenerMensajeError(error: unknown, fallback = 'Ocurrió un error inesperado'): string {
   if (axios.isAxiosError(error)) {
+    if (esErrorTamanoExcesivo(error)) {
+      return mensaje413()
+    }
+
     if (!error.response) {
       return 'No se pudo conectar con el servidor. Verifica tu conexión e inténtalo de nuevo.'
     }
