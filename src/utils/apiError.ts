@@ -1,9 +1,15 @@
-import axios from 'axios'
+import axios, { type AxiosError } from 'axios'
+import type { ApiErrorExtendido } from '../services/api'
 import type { ApiErrorBody } from '../types/usuarios'
+
+const MENSAJE_LOGIN_401 =
+  'Email o contraseña incorrectos. Verifica tus datos e intenta nuevamente.'
+
+const MENSAJE_SESION_EXPIRADA =
+  'Tu sesión expiró. Inicia sesión nuevamente para continuar.'
 
 const MENSAJES_POR_STATUS: Record<number, string> = {
   400: 'Los datos enviados no son válidos.',
-  401: 'Email o contraseña incorrectos. Verifica tus datos e intenta nuevamente.',
   403: 'No tienes permiso para realizar esta acción.',
   404: 'El recurso solicitado no existe.',
   500: 'Error interno del servidor. Intenta más tarde.',
@@ -51,13 +57,21 @@ function buscarMensajeTexto(valor: unknown, profundidad = 0): string | undefined
   return undefined
 }
 
-function esErrorDeCredenciales(mensaje: string): boolean {
-  const lower = mensaje.toLowerCase()
-  return (
-    lower.includes('credencial') ||
-    lower.includes('unauthorized') ||
-    lower.includes('no autorizado')
-  )
+function esError401Login(error: AxiosError): boolean {
+  const url = error.config?.url ?? ''
+  return url.includes('/autenticacion/iniciar-sesion')
+}
+
+function esSesionExpirada(error: unknown): boolean {
+  if (!axios.isAxiosError(error)) return false
+  if ((error as ApiErrorExtendido).sesionExpirada) return true
+  if (error.response?.status !== 401) return false
+  return !esError401Login(error)
+}
+
+function mensaje401(error: AxiosError): string {
+  if (esError401Login(error)) return MENSAJE_LOGIN_401
+  return MENSAJE_SESION_EXPIRADA
 }
 
 /** Obtiene un mensaje legible desde la respuesta de error del BFF/NestJS */
@@ -71,8 +85,8 @@ export function obtenerMensajeError(error: unknown, fallback = 'Ocurrió un erro
     const data = normalizarData(error.response.data)
     const extraido = buscarMensajeTexto(data)
 
-    if (extraido && esErrorDeCredenciales(extraido)) {
-      return MENSAJES_POR_STATUS[401]
+    if (status === 401) {
+      return mensaje401(error)
     }
 
     if (extraido) return extraido
@@ -87,14 +101,14 @@ export function obtenerMensajeError(error: unknown, fallback = 'Ocurrió un erro
 /** Mensajes pensados para el formulario de login (LoginView.vue) */
 export function obtenerMensajeErrorLogin(error: unknown): string {
   if (axios.isAxiosError(error)) {
-    const status = error.response?.status
-
     if (!error.response) {
       return 'No se pudo conectar con el servidor. Verifica tu conexión e inténtalo de nuevo.'
     }
 
+    const status = error.response?.status
+
     if (status === 401) {
-      return MENSAJES_POR_STATUS[401]
+      return MENSAJE_LOGIN_401
     }
 
     if (status && status >= 500) {
@@ -104,3 +118,5 @@ export function obtenerMensajeErrorLogin(error: unknown): string {
 
   return obtenerMensajeError(error, 'No se pudo iniciar sesión. Intenta nuevamente.')
 }
+
+export { MENSAJE_SESION_EXPIRADA, esSesionExpirada }

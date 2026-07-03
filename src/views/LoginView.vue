@@ -4,7 +4,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { Mail, ArrowLeft } from 'lucide-vue-next'
 import CampoContrasena from '../components/CampoContrasena.vue'
 import { authService } from '../services/usuarios'
-import { obtenerMensajeErrorLogin } from '../utils/apiError'
+import { MENSAJE_SESION_EXPIRADA, obtenerMensajeErrorLogin } from '../utils/apiError'
 import { redirigirTrasLogin, rutaSiYaAutenticado, parseReturnTo } from '../utils/authRedirect'
 import isotipoUrl from '../assets/UrbanSphere-Isotipo.png'
 
@@ -15,10 +15,15 @@ const email = ref('')
 const contrasena = ref('')
 const cargando = ref(false)
 const errorMsg = ref('')
+const avisoSesion = ref('')
 
 const volverDestino = computed(() => parseReturnTo(route.query.returnTo) ?? '/')
 
 onMounted(() => {
+  if (route.query.sesionExpirada === '1') {
+    avisoSesion.value = MENSAJE_SESION_EXPIRADA
+  }
+
   const destino = rutaSiYaAutenticado()
   if (destino) router.replace(destino)
 })
@@ -66,7 +71,14 @@ const manejarLogin = async () => {
           <p class="text-slate-500 mt-2 text-sm">Accede a tu cuenta para continuar en UrbanSphere.</p>
         </div>
 
-        <!-- Alerta de Error Dinámica -->
+        <div
+          v-if="avisoSesion"
+          role="status"
+          class="bg-amber-50 border border-amber-200 text-amber-900 p-4 rounded-xl text-sm font-medium"
+        >
+          {{ avisoSesion }}
+        </div>
+
         <div
           v-if="errorMsg"
           role="alert"

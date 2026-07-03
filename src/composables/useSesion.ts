@@ -51,7 +51,9 @@ export function useSesion() {
       await authService.obtenerPerfil()
       aplicarEstadoLocal()
     } catch {
-      // Se mantiene la info cacheada del login
+      if (!authService.estaAutenticado()) {
+        aplicarEstadoLocal()
+      }
     } finally {
       cargando.value = false
     }

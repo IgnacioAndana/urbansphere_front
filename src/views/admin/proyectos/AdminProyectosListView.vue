@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
 import { FolderPlus, Pencil, Trash2, Layers, Image, Dumbbell } from 'lucide-vue-next'
 import AdminLayout from '../../../layouts/AdminLayout.vue'
 import ConfirmModal from '../../../components/ConfirmModal.vue'
@@ -28,12 +27,7 @@ async function cargarLista() {
   try {
     proyectos.value = await proyectosService.listar()
   } catch (error: unknown) {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
-      errorMsg.value =
-        'No se pudo acceder a proyectos: verifica JWT_SECRET compartido entre microservicios y que el BFF reenvíe Authorization.'
-    } else {
-      errorMsg.value = obtenerMensajeError(error, 'Error al cargar proyectos.')
-    }
+    errorMsg.value = obtenerMensajeError(error, 'Error al cargar proyectos.')
   } finally {
     cargando.value = false
   }
