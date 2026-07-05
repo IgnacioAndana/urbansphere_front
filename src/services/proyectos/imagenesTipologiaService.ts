@@ -1,5 +1,5 @@
 import axios from 'axios'
-import api from '../api'
+import api, { API_PUBLICO } from '../api'
 import type { TipologiaImagen } from '../../types/proyectos'
 import type { ActualizarImagenDto } from '../../utils/imagenesGaleria'
 
@@ -8,10 +8,16 @@ function esGaleriaVacia(error: unknown): boolean {
 }
 
 export const imagenesTipologiaService = {
-  async listar(proyectoId: number, tipologiaId: number): Promise<TipologiaImagen[]> {
+  async listar(
+    proyectoId: number,
+    tipologiaId: number,
+    opciones?: { publico?: boolean },
+  ): Promise<TipologiaImagen[]> {
+    const config = opciones?.publico ? API_PUBLICO : undefined
     try {
       const { data } = await api.get<TipologiaImagen[]>(
         `/proyectos/${proyectoId}/tipologias/${tipologiaId}/imagenes`,
+        config,
       )
       return Array.isArray(data) ? data : []
     } catch (error) {

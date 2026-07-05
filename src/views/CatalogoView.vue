@@ -34,7 +34,7 @@ const precioMin = ref<number | null>(null)
 const precioMax = ref<number | null>(null)
 const filtroMoneda = ref<'uf' | 'clp'>('uf')
 
-const { puedeUsarFavoritos, esFavorito, cargarFavoritos, alternarFavorito } = useFavoritos()
+const { cargarFavoritos } = useFavoritos()
 const { valorUf, cargandoUf, cargarValorUf } = useValorUf()
 
 function precioInputAUf(valor: number | null): number | null {
@@ -211,10 +211,6 @@ onUnmounted(() => {
   leafletMap = undefined
   markersLayer = undefined
 })
-
-async function toggleFavorito(id: number | string) {
-  await alternarFavorito(Number(id))
-}
 </script>
 
 <template>
@@ -340,12 +336,7 @@ async function toggleFavorito(id: number | string) {
               </p>
 
               <div v-for="prop in proyectos" :key="prop.id">
-                <ProyectoCatalogoCard
-                  :prop="prop"
-                  :es-favorito="esFavorito(prop.id)"
-                  :mostrar-favorito="puedeUsarFavoritos"
-                  @toggle-favorito="toggleFavorito"
-                />
+                <ProyectoCatalogoCard :prop="prop" />
               </div>
             </template>
           </div>

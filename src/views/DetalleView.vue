@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { MapPin, Bed, Bath, Maximize, Calendar, ChevronRight, Heart } from 'lucide-vue-next'
+import { MapPin, Bed, Bath, Maximize, Calendar, ChevronRight } from 'lucide-vue-next'
 import PublicLayout from '../layouts/PublicLayout.vue'
 import FormularioMeInteresa from '../components/catalogo/FormularioMeInteresa.vue'
+import BotonFavoritoProyecto from '../components/catalogo/BotonFavoritoProyecto.vue'
 import { catalogoService, imagenesTipologiaService } from '../services/proyectos'
 import type { ProyectoDetallePublico } from '../services/proyectos/catalogoService'
 import type { TipologiaImagen } from '../types/proyectos'
@@ -31,7 +32,7 @@ const detalle = ref<ProyectoDetallePublico | null>(null)
 const cargando = ref(true)
 const errorMsg = ref('')
 
-const { puedeUsarFavoritos, esFavorito, cargarFavoritos, alternarFavorito } = useFavoritos()
+const { cargarFavoritos } = useFavoritos()
 const { valorUf, fechaUf, ufEsFallback, cargandoUf, cargarValorUf } = useValorUf()
 
 const precioDesdeClp = computed(() =>
@@ -124,7 +125,7 @@ async function cargarImagenesTipologia(tipologiaId: number) {
   }
   cargandoImagenesTipologia.value = true
   try {
-    const imgs = await imagenesTipologiaService.listar(proyectoId.value, tipologiaId)
+    const imgs = await imagenesTipologiaService.listar(proyectoId.value, tipologiaId, { publico: true })
     imagenesPorTipologia.value.set(tipologiaId, ordenarImagenes(imgs))
     fijarImagenTipologiaPorDefecto(tipologiaId)
   } catch {
@@ -235,15 +236,12 @@ watch(proyectoId, cargar)
                 <span v-if="fechaUfLegible"> ({{ fechaUfLegible }})</span>
                 <span v-if="ufEsFallback"> · valor referencial</span>
               </p>
-              <div v-if="puedeUsarFavoritos" class="flex justify-start md:justify-end mt-4">
-                <button
-                  type="button"
-                  class="w-10 h-10 rounded-full bg-white border flex items-center justify-center transition-all shadow-sm"
-                  :class="esFavorito(detalle.proyecto.id) ? 'border-red-200 text-red-500 bg-red-50' : 'border-slate-200 text-slate-400 hover:text-red-500'"
-                  @click="alternarFavorito(Number(detalle.proyecto.id))"
-                >
-                  <Heart class="w-5 h-5" :class="esFavorito(detalle.proyecto.id) ? 'fill-current' : ''" />
-                </button>
+              <div class="flex justify-start md:justify-end mt-4">
+                <BotonFavoritoProyecto
+                  v-if="detalle"
+                  :proyecto-id="detalle.proyecto.id"
+                  variant="detail"
+                />
               </div>
             </div>
           </div>

@@ -12,7 +12,7 @@ const cargando = ref(true)
 const errorMsg = ref('')
 const quitandoId = ref<number | null>(null)
 
-const { cargarFavoritos, alternarFavorito } = useFavoritos()
+const { cargarFavoritos } = useFavoritos()
 
 async function cargar() {
   cargando.value = true
@@ -27,13 +27,11 @@ async function cargar() {
   }
 }
 
-async function quitarFavorito(id: number) {
+async function quitarFavorito(id: number, eraFavorito: boolean) {
+  if (!eraFavorito) return
   quitandoId.value = id
   try {
-    const ok = await alternarFavorito(id)
-    if (ok) {
-      proyectos.value = proyectos.value.filter((p) => p.id !== id)
-    }
+    proyectos.value = proyectos.value.filter((p) => p.id !== id)
   } finally {
     quitandoId.value = null
   }
@@ -76,10 +74,8 @@ onMounted(cargar)
         v-for="prop in proyectos"
         :key="prop.id"
         :prop="prop"
-        :es-favorito="true"
-        mostrar-favorito
         :class="{ 'opacity-60 pointer-events-none': quitandoId === prop.id }"
-        @toggle-favorito="quitarFavorito"
+        @favorito-cambiado="quitarFavorito"
       />
     </template>
   </div>

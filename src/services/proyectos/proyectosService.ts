@@ -1,5 +1,11 @@
-import api from '../api';
-import type { ConsultarCatalogoResponse, CrearProyectoDto, Proyecto, ProyectoCatalogoApiItem } from '../../types/proyectos';
+import api, { API_PUBLICO } from '../api';
+import type {
+  ConsultarCatalogoResponse,
+  CrearProyectoDto,
+  Proyecto,
+  ProyectoCatalogoApiItem,
+  ProyectoDetalleCatalogoApi,
+} from '../../types/proyectos';
 import { normalizarTipoProyecto, type ProyectoCatalogoItem } from '../../utils/catalogoProyecto';
 import { aEnteroPositivo } from '../../utils/numeros';
 
@@ -24,6 +30,30 @@ export const proyectosService = {
     return data;
   },
 
+  /** GET /proyectos — Catálogo público (solo activos, sin JWT) */
+  async listarPublico(): Promise<Proyecto[]> {
+    const { data } = await api.get<Proyecto[]>('/proyectos', API_PUBLICO);
+    return data ?? [];
+  },
+
+  /** GET /proyectos/catalogo/activos — Listado enriquecido público (si el MS lo expone) */
+  async listarCatalogoActivosPublico(): Promise<ProyectoCatalogoItem[]> {
+    const { data } = await api.get<ProyectoCatalogoApiItem[]>('/proyectos/catalogo/activos', API_PUBLICO);
+    return (data ?? []).map(normalizarItemCatalogo);
+  },
+
+  /** GET /proyectos/catalogo/:id — Detalle agregado público (si el MS lo expone) */
+  async obtenerDetalleCatalogoPublico(id: number): Promise<ProyectoDetalleCatalogoApi> {
+    const { data } = await api.get<ProyectoDetalleCatalogoApi>(`/proyectos/catalogo/${id}`, API_PUBLICO);
+    return data;
+  },
+
+  /** GET /proyectos/:id — Detalle base sin JWT (proyectos activos) */
+  async obtenerPorIdPublico(id: number): Promise<Proyecto> {
+    const { data } = await api.get<Proyecto>(`/proyectos/${id}`, API_PUBLICO);
+    return data;
+  },
+
   /** POST /proyectos/catalogo — Ficha resumida batch por IDs */
   async consultarCatalogo(ids: number[]): Promise<ConsultarCatalogoResponse> {
     const idsUnicos = [...new Set(ids.map((id) => aEnteroPositivo(id)))];
@@ -33,6 +63,26 @@ export const proyectosService = {
     const { data } = await api.post<ConsultarCatalogoResponse>('/proyectos/catalogo', {
       ids: idsUnicos,
     });
+    return {
+      items: (data.items ?? []).map(normalizarItemCatalogo),
+      omitidos: (data.omitidos ?? []).map((o) => ({
+        id: aEnteroPositivo(o.id),
+        motivo: o.motivo,
+      })),
+    };
+  },
+
+  /** POST /proyectos/catalogo — Batch público (solo activos, sin JWT) */
+  async consultarCatalogoPublico(ids: number[]): Promise<ConsultarCatalogoResponse> {
+    const idsUnicos = [...new Set(ids.map((id) => aEnteroPositivo(id)))];
+    if (idsUnicos.length === 0) {
+      return { items: [], omitidos: [] };
+    }
+    const { data } = await api.post<ConsultarCatalogoResponse>(
+      '/proyectos/catalogo',
+      { ids: idsUnicos },
+      API_PUBLICO,
+    );
     return {
       items: (data.items ?? []).map(normalizarItemCatalogo),
       omitidos: (data.omitidos ?? []).map((o) => ({

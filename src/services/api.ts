@@ -17,7 +17,14 @@ const RUTAS_PUBLICAS_POST = [
   '/autenticacion/restablecer-contrasena',
 ]
 
-type RequestConfigExtendida = InternalAxiosRequestConfig & { _retry?: boolean }
+export type RequestConfigExtendida = InternalAxiosRequestConfig & {
+  _retry?: boolean
+  /** No envía JWT — catálogo y detalle público aunque haya token expirado en localStorage */
+  skipAuth?: boolean
+}
+
+/** Opciones Axios para endpoints públicos del catálogo */
+export const API_PUBLICO = { skipAuth: true } as RequestConfigExtendida
 
 export type ApiErrorExtendido = Error & { sesionExpirada?: boolean }
 
@@ -104,6 +111,13 @@ const api = axios.create({
 })
 
 api.interceptors.request.use(async (config) => {
+  const cfg = config as RequestConfigExtendida
+
+  if (cfg.skipAuth) {
+    if (cfg.headers) delete cfg.headers.Authorization
+    return config
+  }
+
   if (esRutaAuthPublica(config.url, config.method) || esRegistroPublico(config.url, config.method)) {
     return config
   }
@@ -122,6 +136,10 @@ api.interceptors.response.use(
     const originalRequest = error.config as RequestConfigExtendida | undefined
     const status = error.response?.status
     const url = originalRequest?.url ?? ''
+
+    if (originalRequest?.skipAuth) {
+      return Promise.reject(error)
+    }
 
     if (status !== 401 || !originalRequest) {
       if (error.response) {

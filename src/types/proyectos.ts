@@ -116,6 +116,14 @@ export interface ConsultarCatalogoResponse {
   omitidos: CatalogoOmitido[]
 }
 
+/** Respuesta agregada de GET /proyectos/catalogo/:id (detalle público) */
+export interface ProyectoDetalleCatalogoApi {
+  proyecto: Proyecto
+  tipologias: Tipologia[]
+  imagenes: ProyectoImagen[]
+  equipamiento: Equipamiento | null
+}
+
 export const EQUIPAMIENTO_OPCIONES: { key: keyof ActualizarEquipamientoDto; label: string }[] = [
   { key: 'gimnasio', label: 'Gimnasio' },
   { key: 'piscina', label: 'Piscina' },

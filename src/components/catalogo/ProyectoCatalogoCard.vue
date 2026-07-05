@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
-import { MapPin, Bed, Bath, Maximize, Heart } from 'lucide-vue-next'
+import { MapPin, Bed, Bath, Maximize } from 'lucide-vue-next'
 import {
   formatearPrecioUf,
   formatearPrecioClp,
@@ -10,16 +10,15 @@ import {
   type ProyectoCatalogoItem,
 } from '../../utils/catalogoProyecto'
 import { useValorUf } from '../../composables/useValorUf'
+import BotonFavoritoProyecto from './BotonFavoritoProyecto.vue'
 import isotipoUrl from '../../assets/UrbanSphere-Isotipo.png'
 
 const props = defineProps<{
   prop: ProyectoCatalogoItem
-  esFavorito?: boolean
-  mostrarFavorito?: boolean
 }>()
 
 const emit = defineEmits<{
-  toggleFavorito: [id: number]
+  favoritoCambiado: [id: number, eraFavorito: boolean]
 }>()
 
 const { valorUf, cargarValorUf } = useValorUf()
@@ -29,6 +28,10 @@ const precioClp = computed(() => clpDesdeUf(props.prop.precioDesdeUf, valorUf.va
 onMounted(() => {
   void cargarValorUf()
 })
+
+function onFavoritoCambiado(eraFavorito: boolean) {
+  emit('favoritoCambiado', props.prop.id, eraFavorito)
+}
 </script>
 
 <template>
@@ -84,16 +87,7 @@ onMounted(() => {
         >
           Ver detalles
         </router-link>
-        <button
-          v-if="mostrarFavorito"
-          type="button"
-          class="px-3 border rounded-lg transition-colors flex items-center justify-center shrink-0"
-          :class="esFavorito ? 'border-red-200 bg-red-50 text-red-500' : 'border-slate-200 text-slate-500 hover:bg-slate-50'"
-          :title="esFavorito ? 'Quitar de favoritos' : 'Agregar a favoritos'"
-          @click="emit('toggleFavorito', prop.id)"
-        >
-          <Heart class="w-4 h-4" :class="esFavorito ? 'fill-current' : ''" />
-        </button>
+        <BotonFavoritoProyecto :proyecto-id="prop.id" @cambio="onFavoritoCambiado" />
       </div>
     </div>
   </div>
