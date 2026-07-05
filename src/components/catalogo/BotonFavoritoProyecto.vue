@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { Heart } from 'lucide-vue-next'
-import { useRoute, useRouter } from 'vue-router'
 import { useFavoritos } from '../../composables/useFavoritos'
-import { queryLoginDesde } from '../../utils/authRedirect'
+import { useAvisoFlotante, MENSAJE_FAVORITOS_SIN_SESION } from '../../composables/useAvisoFlotante'
 
 const props = withDefaults(
   defineProps<{
@@ -17,21 +16,14 @@ const emit = defineEmits<{
   cambio: [eraFavorito: boolean]
 }>()
 
-const route = useRoute()
-const router = useRouter()
 const { puedeUsarFavoritos, esFavorito, alternarFavorito } = useFavoritos()
+const { mostrar } = useAvisoFlotante()
 
 const favorito = () => esFavorito(props.proyectoId)
 
 async function onClick() {
   if (!puedeUsarFavoritos.value) {
-    await router.push({
-      path: '/login',
-      query: {
-        ...queryLoginDesde(route.path, route.fullPath),
-        aviso: 'favoritos',
-      },
-    })
+    mostrar(MENSAJE_FAVORITOS_SIN_SESION)
     return
   }
 

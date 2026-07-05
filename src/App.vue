@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import ChatbotWidget from './components/ChatbotWidget.vue'
+import AvisoFlotante from './components/AvisoFlotante.vue'
 </script>
 
 <template>
   <router-view />
   <ChatbotWidget />
+  <AvisoFlotante />
 </template>
 
 <style>

@@ -22,9 +22,6 @@ const volverDestino = computed(() => parseReturnTo(route.query.returnTo) ?? '/')
 onMounted(() => {
   if (route.query.sesionExpirada === '1') {
     avisoSesion.value = MENSAJE_SESION_EXPIRADA
-  } else if (route.query.aviso === 'favoritos') {
-    avisoSesion.value =
-      'Debes iniciar sesión para marcar o desmarcar propiedades como favoritas.'
   }
 
   const destino = rutaSiYaAutenticado()
