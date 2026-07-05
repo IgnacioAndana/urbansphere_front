@@ -14,7 +14,7 @@
  *
  * Usuario admin de prueba: juan@example.com (rol admin, rol_id → tabla roles)
  */
-import api, { STORAGE_KEYS } from '../api'
+import api, { STORAGE_KEYS, limpiarSesionLocal } from '../api'
 import type {
   CerrarSesionDto,
   IniciarSesionDto,
@@ -29,7 +29,7 @@ import type {
   ValidarTokenRestablecimientoDto,
 } from '../../types/usuarios'
 import { esAdmin, esUsuarioEstandar, puedeAccederPanelAdmin, ROLES } from '../../constants/roles'
-import { obtenerIdUsuarioDesdeToken } from '../../utils/jwt'
+import { obtenerIdUsuarioDesdeToken, tokenJwtExpirado } from '../../utils/jwt'
 
 type UsuarioSesion = IniciarSesionRespuesta['usuario'] | PerfilUsuario
 
@@ -87,11 +87,6 @@ function guardarSesion(
   }
 }
 
-function limpiarSesionLocal() {
-  localStorage.removeItem(STORAGE_KEYS.tokenAcceso)
-  localStorage.removeItem(STORAGE_KEYS.tokenRefresco)
-  localStorage.removeItem(STORAGE_KEYS.usuario)
-}
 
 export const authService = {
   /**
@@ -221,6 +216,9 @@ export const authService = {
   },
 
   estaAutenticado(): boolean {
-    return Boolean(localStorage.getItem(STORAGE_KEYS.tokenAcceso))
+    const token = localStorage.getItem(STORAGE_KEYS.tokenAcceso)
+    if (!token) return false
+    if (!tokenJwtExpirado(token)) return true
+    return Boolean(localStorage.getItem(STORAGE_KEYS.tokenRefresco))
   },
 }

@@ -7,6 +7,8 @@ import { catalogoService } from '../services/proyectos'
 import { obtenerMensajeError } from '../utils/apiError'
 import {
   extraerComunas,
+  extraerDormitorios,
+  extraerBanos,
   filtrarProyectosCatalogo,
   formatearPrecioUf,
   formatearTipoProyecto,
@@ -30,6 +32,8 @@ const errorMsg = ref('')
 const filtroTexto = ref('')
 const filtroComuna = ref('Todas')
 const filtroTipo = ref('Todos')
+const filtroDormitorios = ref('Todos')
+const filtroBanos = ref('Todos')
 const precioMin = ref<number | null>(null)
 const precioMax = ref<number | null>(null)
 const filtroMoneda = ref<'uf' | 'clp'>('uf')
@@ -48,6 +52,8 @@ const precioMinUf = computed(() => precioInputAUf(precioMin.value))
 const precioMaxUf = computed(() => precioInputAUf(precioMax.value))
 
 const comunas = computed(() => ['Todas', ...extraerComunas(proyectosRaw.value)])
+const opcionesDormitorios = computed(() => extraerDormitorios(proyectosRaw.value))
+const opcionesBanos = computed(() => extraerBanos(proyectosRaw.value))
 
 const proyectos = computed(() =>
   filtrarProyectosCatalogo(proyectosRaw.value, {
@@ -56,6 +62,8 @@ const proyectos = computed(() =>
     tipo: filtroTipo.value,
     precioMin: precioMinUf.value,
     precioMax: precioMaxUf.value,
+    dormitorios: filtroDormitorios.value === 'Todos' ? null : Number(filtroDormitorios.value),
+    banos: filtroBanos.value === 'Todos' ? null : Number(filtroBanos.value),
   }),
 )
 
@@ -68,6 +76,8 @@ const hayFiltrosActivos = computed(() => {
     filtroTexto.value.trim() !== '' ||
     filtroComuna.value !== 'Todas' ||
     filtroTipo.value !== 'Todos' ||
+    filtroDormitorios.value !== 'Todos' ||
+    filtroBanos.value !== 'Todos' ||
     precioMinActivo ||
     precioMaxActivo
   )
@@ -77,6 +87,8 @@ function limpiarFiltros() {
   filtroTexto.value = ''
   filtroComuna.value = 'Todas'
   filtroTipo.value = 'Todos'
+  filtroDormitorios.value = 'Todos'
+  filtroBanos.value = 'Todos'
   precioMin.value = null
   precioMax.value = null
 }
@@ -251,6 +263,26 @@ onUnmounted(() => {
                 class="w-full border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#003399]"
                 placeholder="Buscar por nombre, comuna o dirección"
               />
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <select
+                v-model="filtroDormitorios"
+                class="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-600 bg-white focus:outline-none focus:border-[#003399]"
+              >
+                <option value="Todos">Dormitorios</option>
+                <option v-for="d in opcionesDormitorios" :key="`d-${d}`" :value="String(d)">
+                  {{ d === 1 ? '1 dormitorio' : `${d} dormitorios` }}
+                </option>
+              </select>
+              <select
+                v-model="filtroBanos"
+                class="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-600 bg-white focus:outline-none focus:border-[#003399]"
+              >
+                <option value="Todos">Baños</option>
+                <option v-for="b in opcionesBanos" :key="`b-${b}`" :value="String(b)">
+                  {{ b === 1 ? '1 baño' : `${b} baños` }}
+                </option>
+              </select>
             </div>
             <div class="flex flex-col sm:flex-row gap-2">
               <select
