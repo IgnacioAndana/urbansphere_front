@@ -1,6 +1,7 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios'
 import { API_BASE_URL } from '../config/env'
 import { tokenJwtExpirado } from '../utils/jwt'
+import { esRutaPublicaApp, normalizarPathname } from '../utils/rutasPublicas'
 
 export const STORAGE_KEYS = {
   tokenAcceso: 'urbansphere_token',
@@ -79,20 +80,35 @@ async function obtenerTokenValido(): Promise<string | null> {
   const token = localStorage.getItem(STORAGE_KEYS.tokenAcceso)
   if (token && !tokenJwtExpirado(token)) return token
 
-  if (!localStorage.getItem(STORAGE_KEYS.tokenRefresco)) return token
+  const tokenRefresco = localStorage.getItem(STORAGE_KEYS.tokenRefresco)
+  if (!tokenRefresco) {
+    // JWT vencido sin refresh: no enviar token inválido al backend
+    return null
+  }
 
   return intentarRefrescarToken()
 }
 
-/** Limpia la sesión local y redirige al login con aviso de expiración. */
-export function expulsarSesion(returnTo?: string) {
+export function limpiarSesionLocal() {
   localStorage.removeItem(STORAGE_KEYS.tokenAcceso)
   localStorage.removeItem(STORAGE_KEYS.tokenRefresco)
   localStorage.removeItem(STORAGE_KEYS.usuario)
+}
+
+/** Limpia la sesión local; redirige al login solo en rutas protegidas. */
+export function expulsarSesion(returnTo?: string) {
+  limpiarSesionLocal()
+
+  const pathCompleto = returnTo ?? window.location.pathname + window.location.search
+  const pathname = normalizarPathname(pathCompleto.split('?')[0] ?? '/')
+
+  if (esRutaPublicaApp(pathname)) {
+    return
+  }
 
   const params = new URLSearchParams({ sesionExpirada: '1' })
-  if (returnTo && returnTo.startsWith('/') && !returnTo.startsWith('/login')) {
-    params.set('returnTo', returnTo)
+  if (pathCompleto.startsWith('/') && !pathCompleto.startsWith('/login')) {
+    params.set('returnTo', pathCompleto)
   }
 
   const destino = `/login?${params.toString()}`

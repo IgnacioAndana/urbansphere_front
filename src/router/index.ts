@@ -185,6 +185,9 @@ router.beforeEach(async (to) => {
 });
 
 router.afterEach((to) => {
+  document.documentElement.lang = 'es'
+  document.documentElement.setAttribute('translate', 'no')
+
   if (to.name) {
     const routeName = String(to.name);
     const formattedName = routeName.charAt(0).toUpperCase() + routeName.slice(1).replace(/-/g, ' ');

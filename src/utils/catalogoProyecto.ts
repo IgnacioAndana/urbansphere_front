@@ -110,6 +110,39 @@ export function extraerComunas(proyectos: ProyectoCatalogoItem[]): string[] {
   )
 }
 
+function extraerValoresRango(
+  proyectos: ProyectoCatalogoItem[],
+  minKey: 'dormitoriosMin' | 'banosMin',
+  maxKey: 'dormitoriosMax' | 'banosMax',
+): number[] {
+  const valores = new Set<number>()
+  for (const p of proyectos) {
+    const min = p[minKey]
+    const max = p[maxKey]
+    if (min == null || max == null) continue
+    for (let i = min; i <= max; i++) valores.add(i)
+  }
+  return [...valores].sort((a, b) => a - b)
+}
+
+export function extraerDormitorios(proyectos: ProyectoCatalogoItem[]): number[] {
+  return extraerValoresRango(proyectos, 'dormitoriosMin', 'dormitoriosMax')
+}
+
+export function extraerBanos(proyectos: ProyectoCatalogoItem[]): number[] {
+  return extraerValoresRango(proyectos, 'banosMin', 'banosMax')
+}
+
+function coincideRango(
+  min: number | null,
+  max: number | null,
+  valor: number | null | undefined,
+): boolean {
+  if (valor == null || Number.isNaN(valor)) return true
+  if (min == null || max == null) return false
+  return valor >= min && valor <= max
+}
+
 export function filtrarProyectosCatalogo(
   proyectos: ProyectoCatalogoItem[],
   opts: {
@@ -118,12 +151,16 @@ export function filtrarProyectosCatalogo(
     tipo?: string
     precioMin?: number | null
     precioMax?: number | null
+    dormitorios?: number | null
+    banos?: number | null
   },
 ): ProyectoCatalogoItem[] {
   const q = (opts.texto ?? '').trim().toLowerCase()
   return proyectos.filter((p) => {
     if (opts.tipo && opts.tipo !== 'Todos' && p.tipo !== opts.tipo) return false
     if (opts.comuna && opts.comuna !== 'Todas' && p.comuna !== opts.comuna) return false
+    if (!coincideRango(p.dormitoriosMin, p.dormitoriosMax, opts.dormitorios)) return false
+    if (!coincideRango(p.banosMin, p.banosMax, opts.banos)) return false
     if (opts.precioMin != null && p.precioDesdeUf != null && p.precioDesdeUf < opts.precioMin) {
       return false
     }
