@@ -56,6 +56,23 @@ describe('api service', () => {
       // href is not modified
       expect(window.location.href).toBe('')
     })
+
+    it('no debería agregar returnTo si la ruta empieza con /login (bypass)', () => {
+      expulsarSesion('/login-falso-privado')
+      expect(window.location.href).toBe('/login?sesionExpirada=1')
+    })
+
+    it('no debería agregar returnTo si la ruta no empieza con /', () => {
+      expulsarSesion('http://externo.com')
+      expect(window.location.href).toBe('/login?sesionExpirada=1')
+    })
+
+    it('no debería redirigir si ya está en la ruta destino de expulsión', () => {
+      window.location.pathname = '/login'
+      window.location.search = '?sesionExpirada=1'
+      expulsarSesion()
+      expect(window.location.href).toBe('')
+    })
   })
 
   describe('interceptores de request', () => {
@@ -66,6 +83,18 @@ describe('api service', () => {
       
       const config: any = { url: '/test', method: 'get', ...API_PUBLICO, headers: { Authorization: 'Bearer x' } }
       
+      const result = await requestInterceptor(config)
+      expect(result.headers.Authorization).toBeUndefined()
+    })
+
+    it('debería manejar skipAuth sin fallar si no hay headers definidos', async () => {
+      const config: any = { url: '/test', method: 'get', skipAuth: true }
+      const result = await requestInterceptor(config)
+      expect(result).toBe(config)
+    })
+
+    it('no debería fallar si la url es undefined (esRutaAuthPublica)', async () => {
+      const config: any = { method: 'post', headers: {} }
       const result = await requestInterceptor(config)
       expect(result.headers.Authorization).toBeUndefined()
     })
@@ -114,9 +143,26 @@ describe('api service', () => {
       expect(axiosPostSpy).toHaveBeenCalledTimes(1)
       expect(result.headers.Authorization).toBe('Bearer new_token')
       expect(localStorage.getItem(STORAGE_KEYS.tokenAcceso)).toBe('new_token')
+    })
+
+    it('debería reusar la promesa de refresco si se llama múltiples veces en request', async () => {
+      const tokenExpirado = 'header.' + btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) - 3600 })) + '.sign'
+      localStorage.setItem(STORAGE_KEYS.tokenAcceso, tokenExpirado)
+      localStorage.setItem(STORAGE_KEYS.tokenRefresco, 'refresh')
       
-      // Llamarlo por segunda vez mientras se resuelve para probar promesaRefresco 
-      // (difícil de simular el timing aquí sin retrasar axiosPostSpy, pero pasará por la lógica base)
+      const config1: any = { url: '/test1', method: 'get', headers: {} }
+      const config2: any = { url: '/test2', method: 'get', headers: {} }
+      
+      axiosPostSpy.mockImplementation(() => new Promise(resolve => setTimeout(() => resolve({ data: { tokenAcceso: 'new_token', tokenRefresco: 'new_refresh' } }), 10)))
+
+      const p1 = requestInterceptor(config1)
+      const p2 = requestInterceptor(config2)
+      
+      const [r1, r2] = await Promise.all([p1, p2])
+      
+      expect(axiosPostSpy).toHaveBeenCalledTimes(1)
+      expect(r1.headers.Authorization).toBe('Bearer new_token')
+      expect(r2.headers.Authorization).toBe('Bearer new_token')
     })
   })
 
@@ -211,6 +257,23 @@ describe('api service', () => {
       
       await expect(responseErrorInterceptor(error)).rejects.toEqual(error)
       expect(window.location.href).toContain('/login')
+    })
+
+    it('debería retornar null en intentarRefrescarToken si no hay token de refresco y no llamar api', async () => {
+      localStorage.setItem(STORAGE_KEYS.tokenAcceso, 'old_token')
+      window.location.pathname = '/perfil'
+      const config: any = { url: '/test', headers: {} }
+      const error = { config, response: { status: 401 } }
+      
+      await expect(responseErrorInterceptor(error)).rejects.toEqual(error)
+      expect(window.location.href).toContain('/login')
+    })
+
+    it('no debería expulsar si falla el refresco pero no se tenía sesión', async () => {
+      const error = { config: { url: '/autenticacion/refrescar' }, response: { status: 401 } }
+      await expect(responseErrorInterceptor(error)).rejects.toEqual(error)
+      expect((error as any).sesionExpirada).toBe(true)
+      expect(window.location.href).toBe('') // no redirige
     })
   })
 })

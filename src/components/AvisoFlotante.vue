@@ -30,7 +30,6 @@ const { mensaje, cerrar } = useAvisoFlotante()
           leave-to-class="opacity-0 scale-95"
         >
           <div
-            v-if="mensaje"
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="aviso-flotante-titulo"

@@ -100,7 +100,7 @@ export function expulsarSesion(returnTo?: string) {
   limpiarSesionLocal()
 
   const pathCompleto = returnTo ?? window.location.pathname + window.location.search
-  const pathname = normalizarPathname(pathCompleto.split('?')[0] ?? '/')
+  const pathname = normalizarPathname(pathCompleto.split('?')[0])
 
   if (esRutaPublicaApp(pathname)) {
     return
@@ -112,9 +112,7 @@ export function expulsarSesion(returnTo?: string) {
   }
 
   const destino = `/login?${params.toString()}`
-  if (window.location.pathname + window.location.search !== destino) {
-    window.location.href = destino
-  }
+  window.location.href = destino
 }
 
 const api = axios.create({
@@ -160,7 +158,7 @@ api.interceptors.response.use(
     if (status !== 401 || !originalRequest) {
       if (error.response) {
         console.error(`[API Error ${error.response.status}]:`, error.response.data)
-      } else if (!error.response) {
+      } else {
         console.error('[Network Error]: No se pudo conectar con el servidor backend.')
       }
       return Promise.reject(error)

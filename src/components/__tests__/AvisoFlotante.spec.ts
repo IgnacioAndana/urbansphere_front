@@ -80,7 +80,7 @@ describe('AvisoFlotante.vue', () => {
 
   it('debería destruir el inner div si el mensaje pasa a vacío', async () => {
     mensajeRef.value = 'Mensaje inicial'
-    const wrapper = mount(AvisoFlotante)
+    mount(AvisoFlotante)
     await Promise.resolve() // Render initial
 
     expect(document.body.textContent).toContain('Mensaje inicial')

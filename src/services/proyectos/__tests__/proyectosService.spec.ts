@@ -104,6 +104,13 @@ describe('proyectosService', () => {
       expect(api.post).not.toHaveBeenCalled()
       expect(resultado).toEqual({ items: [], omitidos: [] })
     })
+
+    it('debería retornar arrays vacíos si el servidor no devuelve items u omitidos', async () => {
+      vi.mocked(api.post).mockResolvedValueOnce({ data: {} })
+      const resultado = await proyectosService.consultarCatalogo([1])
+      expect(resultado.items).toEqual([])
+      expect(resultado.omitidos).toEqual([])
+    })
   })
 
   describe('consultarCatalogoPublico', () => {
@@ -126,6 +133,13 @@ describe('proyectosService', () => {
       const resultado = await proyectosService.consultarCatalogoPublico([])
       expect(api.post).not.toHaveBeenCalled()
       expect(resultado).toEqual({ items: [], omitidos: [] })
+    })
+
+    it('debería retornar arrays vacíos si el servidor no devuelve items u omitidos (público)', async () => {
+      vi.mocked(api.post).mockResolvedValueOnce({ data: {} })
+      const resultado = await proyectosService.consultarCatalogoPublico([1])
+      expect(resultado.items).toEqual([])
+      expect(resultado.omitidos).toEqual([])
     })
   })
 
