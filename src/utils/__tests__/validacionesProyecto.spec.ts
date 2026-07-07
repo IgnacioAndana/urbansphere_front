@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import {
-  fechaMinimaHoyLocal,
   esEnteroPositivo,
   esSuperficieValida,
   esUfEntera,
@@ -78,6 +77,26 @@ describe('validacionesProyecto utils', () => {
     it('debería validar código de tipología', () => {
       const form = { codigoTipologia: ' ', dormitorios: 2, banos: 2, superficieM2: 50.5, valorEnUf: 2500 }
       expect(validarTipologiaForm(form as CrearTipologiaDto)).toBe('El código es obligatorio (ej: 2D2B).')
+    })
+
+    it('debería validar dormitorios', () => {
+      const form = { codigoTipologia: '2D2B', dormitorios: 0, banos: 2, superficieM2: 50.5, valorEnUf: 2500 }
+      expect(validarTipologiaForm(form as CrearTipologiaDto)).toBe('Dormitorios debe ser un número entero mayor a 0.')
+    })
+
+    it('debería validar baños', () => {
+      const form = { codigoTipologia: '2D2B', dormitorios: 2, banos: 0, superficieM2: 50.5, valorEnUf: 2500 }
+      expect(validarTipologiaForm(form as CrearTipologiaDto)).toBe('Baños debe ser un número entero mayor a 0.')
+    })
+
+    it('debería validar superficie', () => {
+      const form = { codigoTipologia: '2D2B', dormitorios: 2, banos: 2, superficieM2: 0, valorEnUf: 2500 }
+      expect(validarTipologiaForm(form as CrearTipologiaDto)).toBe('Superficie (m²) debe ser mayor a 0.')
+    })
+
+    it('debería validar valor UF', () => {
+      const form = { codigoTipologia: '2D2B', dormitorios: 2, banos: 2, superficieM2: 50.5, valorEnUf: 2500.5 }
+      expect(validarTipologiaForm(form as CrearTipologiaDto)).toBe('Valor UF debe ser un número entero mayor a 0 (sin decimales).')
     })
   })
 

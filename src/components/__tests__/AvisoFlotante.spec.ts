@@ -77,4 +77,18 @@ describe('AvisoFlotante.vue', () => {
     
     expect(cerrarMock).toHaveBeenCalledTimes(1)
   })
+
+  it('debería destruir el inner div si el mensaje pasa a vacío', async () => {
+    mensajeRef.value = 'Mensaje inicial'
+    const wrapper = mount(AvisoFlotante)
+    await Promise.resolve() // Render initial
+
+    expect(document.body.textContent).toContain('Mensaje inicial')
+
+    // Cambiar a falso
+    mensajeRef.value = ''
+    await Promise.resolve()
+
+    expect(document.body.querySelector('[role="alertdialog"]')).toBeNull()
+  })
 })

@@ -66,4 +66,31 @@ describe('useValorUf composable', () => {
     
     expect(valorUfService.obtener).toHaveBeenCalledTimes(1) // Sólo se llamó una vez
   })
+
+  it('debería esperar a la promesa si se llama concurrentemente', async () => {
+    // Simulamos una promesa que tarda un poco
+    let resolveObtener: (value: any) => void
+    const promesaFalsa = new Promise<any>((resolve) => {
+      resolveObtener = resolve
+    })
+    
+    vi.mocked(valorUfService.obtener).mockReturnValueOnce(promesaFalsa)
+
+    const { cargarValorUf, cargandoUf } = useValorUf()
+    
+    // Llamadas concurrentes
+    const p1 = cargarValorUf()
+    const p2 = cargarValorUf()
+
+    expect(cargandoUf.value).toBe(true)
+    expect(valorUfService.obtener).toHaveBeenCalledTimes(1)
+
+    // Resolvemos la promesa base
+    resolveObtener!({ valor: 36000, fecha: '2024-02-01', esFallback: false })
+
+    await p1
+    await p2
+
+    expect(valorUfService.obtener).toHaveBeenCalledTimes(1)
+  })
 })

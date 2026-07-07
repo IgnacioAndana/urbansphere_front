@@ -32,7 +32,7 @@ describe('BotonFavoritoProyecto.vue', () => {
       puedeUsarFavoritos: puedeUsarFavoritosRef,
       esFavorito: esFavoritoMock,
       alternarFavorito: alternarFavoritoMock,
-      favoritos: ref([]),
+      idsFavoritos: ref(new Set()),
       cargandoFavoritos: ref(false),
       cargarFavoritos: vi.fn()
     })
@@ -45,7 +45,7 @@ describe('BotonFavoritoProyecto.vue', () => {
     })
   })
 
-  it('debería renderizar correctamente en estado inactivo', () => {
+  it('debería renderizar correctamente en estado inactivo con variant card', () => {
     const wrapper = mount(BotonFavoritoProyecto, {
       props: { proyectoId: 1 }
     })
@@ -53,15 +53,41 @@ describe('BotonFavoritoProyecto.vue', () => {
     expect(esFavoritoMock).toHaveBeenCalledWith(1)
     // El botón debe tener las clases por defecto y no las clases activas
     expect(wrapper.classes()).not.toContain('bg-red-50')
+    expect(wrapper.classes()).toContain('px-3')
+    expect(wrapper.attributes('title')).toBe('Agregar a favoritos')
   })
 
-  it('debería renderizar como activo si el proyecto es favorito', () => {
+  it('debería renderizar como activo si el proyecto es favorito con variant card', () => {
     esFavoritoMock.mockReturnValue(true)
     
     const wrapper = mount(BotonFavoritoProyecto, {
       props: { proyectoId: 1 }
     })
     
+    expect(wrapper.classes()).toContain('bg-red-50')
+    expect(wrapper.classes()).toContain('text-red-500')
+    expect(wrapper.attributes('title')).toBe('Quitar de favoritos')
+  })
+
+  it('debería renderizar correctamente en estado inactivo con variant detail', () => {
+    const wrapper = mount(BotonFavoritoProyecto, {
+      props: { proyectoId: 1, variant: 'detail' }
+    })
+    
+    expect(wrapper.classes()).toContain('w-10')
+    expect(wrapper.classes()).toContain('h-10')
+    expect(wrapper.classes()).toContain('rounded-full')
+    expect(wrapper.classes()).not.toContain('bg-red-50')
+  })
+
+  it('debería renderizar como activo si el proyecto es favorito con variant detail', () => {
+    esFavoritoMock.mockReturnValue(true)
+    
+    const wrapper = mount(BotonFavoritoProyecto, {
+      props: { proyectoId: 1, variant: 'detail' }
+    })
+    
+    expect(wrapper.classes()).toContain('w-10')
     expect(wrapper.classes()).toContain('bg-red-50')
     expect(wrapper.classes()).toContain('text-red-500')
   })
@@ -78,6 +104,18 @@ describe('BotonFavoritoProyecto.vue', () => {
     expect(wrapper.emitted('cambio')?.[0]).toEqual([false]) // eraFavorito era false
   })
 
+  it('debería llamar a alternarFavorito pero NO emitir el evento si falla la llamada', async () => {
+    alternarFavoritoMock.mockResolvedValue(false)
+    const wrapper = mount(BotonFavoritoProyecto, {
+      props: { proyectoId: 1 }
+    })
+    
+    await wrapper.find('button').trigger('click')
+    
+    expect(alternarFavoritoMock).toHaveBeenCalledWith(1)
+    expect(wrapper.emitted('cambio')).toBeFalsy()
+  })
+
   it('debería mostrar mensaje de aviso y NO alternar favorito si el usuario no puede usar favoritos', async () => {
     puedeUsarFavoritosRef.value = false
     
@@ -85,6 +123,8 @@ describe('BotonFavoritoProyecto.vue', () => {
       props: { proyectoId: 1 }
     })
     
+    expect(wrapper.attributes('title')).toBe('Inicia sesión para guardar favoritos')
+
     await wrapper.find('button').trigger('click')
     
     expect(alternarFavoritoMock).not.toHaveBeenCalled()

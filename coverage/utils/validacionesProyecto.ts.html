@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">86.2% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>25/29</span>
+                <span class='fraction'>29/29</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">81.81% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>18/22</span>
+                <span class='fraction'>22/22</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">85.71% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>24/28</span>
+                <span class='fraction'>28/28</span>
             </div>
         
             
@@ -139,19 +139,19 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -164,20 +164,20 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -231,17 +231,17 @@ export function validarTipologiaForm(form: CrearTipologiaDto): string | null {
   if (!form.codigoTipologia.trim()) {
     return 'El código es obligatorio (ej: 2D2B).'
   }
-  <span class="missing-if-branch" title="if path not taken" >I</span>if (!esEnteroPositivo(form.dormitorios)) {
-<span class="cstat-no" title="statement not covered" >    return 'Dormitorios debe ser un número entero mayor a 0.'</span>
+  if (!esEnteroPositivo(form.dormitorios)) {
+    return 'Dormitorios debe ser un número entero mayor a 0.'
   }
-  <span class="missing-if-branch" title="if path not taken" >I</span>if (!esEnteroPositivo(form.banos)) {
-<span class="cstat-no" title="statement not covered" >    return 'Baños debe ser un número entero mayor a 0.'</span>
+  if (!esEnteroPositivo(form.banos)) {
+    return 'Baños debe ser un número entero mayor a 0.'
   }
-  <span class="missing-if-branch" title="if path not taken" >I</span>if (!esSuperficieValida(form.superficieM2)) {
-<span class="cstat-no" title="statement not covered" >    return 'Superficie (m²) debe ser mayor a 0.'</span>
+  if (!esSuperficieValida(form.superficieM2)) {
+    return 'Superficie (m²) debe ser mayor a 0.'
   }
-  <span class="missing-if-branch" title="if path not taken" >I</span>if (!esUfEntera(form.valorEnUf)) {
-<span class="cstat-no" title="statement not covered" >    return 'Valor UF debe ser un número entero mayor a 0 (sin decimales).'</span>
+  if (!esUfEntera(form.valorEnUf)) {
+    return 'Valor UF debe ser un número entero mayor a 0 (sin decimales).'
   }
   return null
 }
@@ -262,7 +262,7 @@ export function normalizarTipologiaDto(form: CrearTipologiaDto): CrearTipologiaD
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-07-05T21:10:30.981Z
+                at 2026-07-07T00:33:08.594Z
             </div>
         <script src="../prettify.js"></script>
         <script>
